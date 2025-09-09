@@ -6,5 +6,5 @@ RUN python3.10 -m pip install --upgrade pip && \
     python3.10 -m pip install --upgrade -r /requirements.txt --no-cache-dir && \
     rm /requirements.txt
 
-COPY handler.py /handler.py
-CMD python3.10 -u /handler.py
+COPY rp_handler.py /rp_handler.py
+CMD python3.10 -u /rp_handler.py
