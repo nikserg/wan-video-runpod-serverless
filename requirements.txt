@@ -1,1 +1,10 @@
 runpod
+torch
+diffusers
+transformers
+huggingface-hub
+imageio
+imageio-ffmpeg
+pillow
+requests
+numpy
