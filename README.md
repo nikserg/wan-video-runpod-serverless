@@ -23,13 +23,14 @@ RunPod serverless endpoint for WAN 2.2 video generation supporting both text-to-
 
 1. Click the RunPod badge above or visit the [Hub page](https://console.runpod.io/hub/nikserg/wan-video-runpod-serverless)
 2. Choose a preset based on your GPU VRAM:
-   - **VACE-1.3B** - Low VRAM (3.5GB+)
-   - **I2V-14B-480P** - Mid VRAM (17GB+)  
-   - **I2V-14B-720P** - Consumer GPU (24GB)
-   - **TI2V-5B** - Consumer GPU (24GB)
-   - **I2V-A14B/T2V-A14B** - High-end (80GB+)
+   - **VACE-1.3B** - Low VRAM (3.5GB+) - Fastest for testing
+   - **I2V-14B-480P** - Mid VRAM (17GB+) - Good speed/quality balance  
+   - **I2V-14B-720P** - Consumer GPU (24GB) - **Recommended for RTX 4090**
+   - **TI2V-5B** - Consumer GPU (24GB) - Supports both T2V and I2V
+   - **I2V-A14B/T2V-A14B** - High-end (80GB+) - Maximum quality
 3. Configure LoRA URLs if needed
 4. Deploy and wait for model initialization
+
 
 
 ### API Usage
@@ -113,73 +114,50 @@ with open("generated_video.mp4", "wb") as f:
 
 ## Environment Variables
 
-### Model Configuration
-- `WAN_MODEL_TYPE` - Model variant (TI2V-5B, T2V-A14B, I2V-A14B)
-- `USE_MOCK_GENERATOR` - Enable mock generator for testing (true/false)
+Configure your serverless endpoint with these environment variables:
 
-### LoRA Configuration
-- `LORA_URL_1` - First LoRA download URL (CivitAI supported)
-- `LORA_URL_2` - Second LoRA URL (optional)
-- `LORA_URL_3` - Third LoRA URL (optional)
+| Variable | Type | Default | Description | Example |
+|----------|------|---------|-------------|---------|
+| **Model Configuration** | | | | |
+| `WAN_MODEL_TYPE` | select | `I2V-14B-720P` | Choose WAN model variant | `VACE-1.3B`, `I2V-14B-720P`, `TI2V-5B` |
+| `USE_MOCK_GENERATOR` | boolean | `false` | Use mock generator for testing | `true` for testing, `false` for production |
+| **LoRA Configuration** | | | | |
+| `LORA_URL_1` | string | - | First LoRA download URL | CivitAI model URL |
+| `LORA_URL_2` | string | - | Second LoRA download URL (optional) | CivitAI model URL |
+| `LORA_URL_3` | string | - | Third LoRA download URL (optional) | CivitAI model URL |
 
-## WAN Model Variants
+### Model Type Options
 
-### Low VRAM Options
+| Model Type | VRAM Required | Best For | Speed |
+|------------|---------------|----------|-------|
+| `VACE-1.3B` | 3.5GB+ | Quick testing, low-end GPUs | ⚡⚡⚡ Fastest |
+| `I2V-14B-480P` | 17GB+ | Budget production, speed priority | ⚡⚡ Fast |
+| `I2V-14B-720P` | 24GB+ | **Production recommended** | ⚡ Good |
+| `TI2V-5B` | 24GB+ | Both T2V and I2V support | ⚡ Good |
+| `T2V-A14B` | 80GB+ | Enterprise T2V only | ⚡⚡ Fast |
+| `I2V-A14B` | 80GB+ | Enterprise I2V only | ⚡⚡ Fast |
 
-#### VACE-1.3B (Fastest)
-- **GPU**: 3.5GB+ VRAM (GTX 1060, RTX 3060)
-- **Features**: Image-to-video generation
-- **Performance**: ~4 minutes for 5-second video on RTX 4090
-- **Resolution**: Up to 832×480
-- **Best for**: Quick prototyping, low-end hardware
+## Model Capabilities
 
-### Consumer GPU Options (24GB VRAM)
-
-#### I2V-14B-720P (Recommended for 24GB)
-- **GPU**: RTX 4090, RTX 6000 Ada (24GB VRAM)
-- **Features**: High-quality image-to-video
-- **Performance**: Optimized for 720p generation
-- **Resolution**: Up to 1280×720
-- **Best for**: High-quality I2V on consumer GPUs
-
-#### I2V-14B-480P (Memory Efficient)
-- **GPU**: RTX 3090, RTX 4080 (17GB+ VRAM)
-- **Features**: Image-to-video generation
-- **Performance**: Faster than 720p variant
-- **Resolution**: Up to 854×480
-- **Best for**: Faster generation on mid-range GPUs
-
-#### TI2V-5B (Versatile)
-- **GPU**: RTX 4090+ (24GB VRAM)
-- **Features**: Text-to-video + Image-to-video
-- **Performance**: ~9 minutes for 720p video
-- **Resolution**: Up to 1280×720
-- **Best for**: Both T2V and I2V workflows
-
-### Enterprise GPU Options (80GB+ VRAM)
-
-#### T2V-A14B (Text-to-Video Specialist)
-- **GPU**: A100, H100 (80GB+ VRAM)
-- **Features**: Text-to-video only
-- **Performance**: Superior quality and speed
-- **Best for**: High-end T2V generation
-
-#### I2V-A14B (Image-to-Video Specialist)
-- **GPU**: A100, H100 (80GB+ VRAM)
-- **Features**: Image-to-video only
-- **Performance**: Superior quality and speed
-- **Best for**: Professional I2V workflows
+| Model | Type | Input Support | Max Resolution | Key Features |
+|-------|------|---------------|----------------|--------------|
+| **VACE-1.3B** | I2V Only | Image + Prompt | 832×480 | Ultra-fast, low VRAM |
+| **I2V-14B-480P** | I2V Only | Image + Prompt | 854×480 | Good speed/quality balance |
+| **I2V-14B-720P** | I2V Only | Image + Prompt | 1280×720 | High quality, consumer GPU |
+| **TI2V-5B** | T2V + I2V | Text or Image + Prompt | 1280×720 | Versatile, dual-mode |
+| **T2V-A14B** | T2V Only | Text + Prompt | 1280×720+ | Enterprise text-to-video |
+| **I2V-A14B** | I2V Only | Image + Prompt | 1280×720+ | Enterprise image-to-video |
 
 ## Hardware Requirements
 
 | Model | Min VRAM | Recommended GPU | Resolution | Performance |
 |-------|----------|-----------------|------------|-------------|
-| VACE-1.3B | 3.5GB | GTX 1060, RTX 3060 | 832×480 | ~4min (RTX 4090) |
-| I2V-14B-480P | 17GB | RTX 3090, RTX 4080 | 854×480 | Fast generation |
-| I2V-14B-720P | 24GB | RTX 4090, RTX 6000 | 1280×720 | High quality |
-| TI2V-5B | 24GB | RTX 4090 | 1280×720 | ~9min |
-| T2V-A14B | 80GB | A100/H100 | 1280×720+ | Superior |
-| I2V-A14B | 80GB | A100/H100 | 1280×720+ | Superior |
+| VACE-1.3B | 3.5GB | GTX 1060, RTX 3060 | 832×480 | ~1min (RTX 4090) |
+| I2V-14B-480P | 17GB | RTX 3090, RTX 4080 | 854×480 | ~3-5min |
+| I2V-14B-720P | 24GB | RTX 4090, RTX 6000 | 1280×720 | ~6-9min |
+| TI2V-5B | 24GB | RTX 4090 | 1280×720 | ~8-12min |
+| T2V-A14B | 80GB | A100/H100 | 1280×720+ | ~4-6min |
+| I2V-A14B | 80GB | A100/H100 | 1280×720+ | ~4-6min |
 
 **Storage**: 100GB+ container disk for models and cache
 
@@ -260,30 +238,153 @@ docker run --rm -p 8000:8000 --gpus all \
 }
 ```
 
+## Performance Guide
+
+### Model Selection by Use Case
+
+| Use Case | Recommended Model | Why |
+|----------|------------------|-----|
+| **Quick Testing** | VACE-1.3B | Fastest generation (~1 min) |
+| **Production I2V** | I2V-14B-720P | Best balance of speed/quality for 24GB GPU |
+| **Both T2V & I2V** | TI2V-5B | Versatile, supports both modes |
+| **Maximum Quality** | I2V-A14B / T2V-A14B | Enterprise-grade results |
+| **Budget GPU** | I2V-14B-480P | Works on 17GB+ GPUs |
+
+### Speed Optimization Tips
+
+**For Faster Generation:**
+- Use `480p` resolution preset instead of `720p` 
+- Reduce `duration_seconds` (1-3 seconds)
+- Lower `fps` (12-16 instead of 24-30)
+- Reduce `num_inference_steps` to 30-40
+
+**For Better Quality:**
+- Use `720p` or higher resolution presets
+- Increase `guidance_scale` to 7-10
+- Use specific, detailed prompts
+- Add negative prompts to avoid unwanted elements
+
+### Cost Estimation (RunPod)
+
+**RTX 4090 (~$0.50/hour):**
+- VACE-1.3B: ~$0.01 per video
+- I2V-14B-720P: ~$0.05-0.08 per video  
+- TI2V-5B: ~$0.07-0.10 per video
+
+**A100 (~$1.50/hour):**
+- I2V-A14B: ~$0.10-0.15 per video
+- T2V-A14B: ~$0.10-0.15 per video
+
+## Best Practices
+
+### Prompt Engineering
+- **Be specific**: "A red sports car driving on a mountain road at sunset" vs "car driving"
+- **Include motion**: "slowly rotating", "gently swaying", "smoothly moving"
+- **Set the scene**: "cinematic lighting", "4K quality", "detailed background"
+- **Use negative prompts**: "blurry, low quality, distorted, static"
+
+### Optimal Settings by Content
+
+**Nature/Landscapes:**
+```json
+{
+  "resolution_preset": "720p",
+  "fps": 16,
+  "duration_seconds": 4.0,
+  "guidance_scale": 6.0
+}
+```
+
+**People/Portraits:**
+```json
+{
+  "resolution_preset": "480p_vertical", 
+  "fps": 20,
+  "duration_seconds": 3.0,
+  "guidance_scale": 7.5
+}
+```
+
+**Social Media:**
+```json
+{
+  "resolution_preset": "square",
+  "fps": 24,
+  "duration_seconds": 2.0,
+  "guidance_scale": 8.0
+}
+```
+
 ## Troubleshooting
 
 ### Common Issues
 
 **Model Download Fails**
-- Check internet connectivity
-- Verify Hugging Face access
+- Check internet connectivity and Hugging Face access
 - Ensure sufficient disk space (100GB+)
+- Try switching to `USE_MOCK_GENERATOR=true` for testing
 
 **Out of Memory Errors**  
-- Use TI2V-5B model for consumer GPUs
-- Enable `USE_MOCK_GENERATOR=true` for testing
-- Reduce video resolution or duration
+- Switch to smaller model (I2V-14B-480P or VACE-1.3B)
+- Reduce resolution preset (`720p` → `480p`)
+- Lower video duration and FPS
+- Enable mock generator for testing
 
 **Slow Generation**
-- Lower `num_inference_steps` (e.g., 30)
-- Use smaller resolution (720p → 480p)
-- Reduce duration or FPS
+- Use VACE-1.3B for fastest results (~1 min)
+- Lower `num_inference_steps` to 30-40
+- Reduce resolution preset and duration
+- Consider using I2V-14B-480P instead of 720P
+
+**API Timeout Errors**
+- Increase timeout in your client code (5+ minutes for real models)
+- Use shorter video duration for testing
+- Check RunPod pod status and logs
+
+**Quality Issues**
+- Use higher `guidance_scale` (7-10)
+- Add detailed negative prompts
+- Try different resolution presets
+- Ensure prompt describes motion clearly
 
 ### Mock Generator Mode
 For testing without GPU requirements:
 ```bash
 docker run -e USE_MOCK_GENERATOR=true wan-video-serverless
 ```
+
+## FAQ
+
+### General Questions
+
+**Q: Which model should I choose for production?**  
+A: I2V-14B-720P for RTX 4090, or I2V-A14B for enterprise GPUs.
+
+**Q: How long does video generation take?**  
+A: 1-12 minutes depending on model and settings. See Performance table above.
+
+**Q: Can I use custom LoRAs?**  
+A: Yes, set LORA_URL_1, LORA_URL_2, LORA_URL_3 environment variables with CivitAI URLs.
+
+**Q: What's the maximum video length?**  
+A: Technically unlimited, but longer videos require more VRAM and time. Recommended: 1-10 seconds.
+
+**Q: Do I need to specify both width/height and resolution_preset?**  
+A: No, resolution_preset overrides width/height. Use preset for convenience.
+
+### Technical Questions
+
+**Q: Why does the container take so long to start?**  
+A: Models are downloaded on first run (20GB+). Subsequent starts are faster with volume caching.
+
+**Q: Can I run this locally without RunPod?**  
+A: Yes, but you need a GPU with sufficient VRAM. See Local Development section.
+
+**Q: Is the API compatible with OpenAI format?**  
+A: No, it uses RunPod serverless format. See API Reference for exact schema.
+
+**Q: How do I reduce costs?**  
+A: Use VACE-1.3B for testing, batch multiple requests, and optimize settings per Performance Guide.
 
 ## License
 

@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y \
     libgstreamer-plugins-base1.0-0 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-ENV TORCH_CUDA_ARCH_LIST="8.6"
 ENV FLASH_ATTENTION_FORCE_BUILD=TRUE
+ENV HF_HUB_ENABLE_HF_TRANSFER=1
 
 COPY requirements.txt .
 
@@ -34,7 +34,7 @@ RUN python3.10 -m pip install xformers --extra-index-url https://download.pytorc
 RUN python3.10 -m pip install deepspeed fairscale
 
 
-RUN python3.10 -m pip install opencv-python pillow numpy requests httpx aiofiles safetensors omegaconf einops runpod && \
+RUN python3.10 -m pip install opencv-python pillow numpy requests httpx aiofiles safetensors omegaconf einops runpod hf_transfer && \
     rm /requirements.txt
 
 RUN mkdir -p /models /loras /workspace

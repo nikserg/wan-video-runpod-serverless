@@ -50,6 +50,93 @@
         "fps": 12
       },
       "timeout": 60000
+    },
+    {
+      "name": "custom_dimensions_test",
+      "input": {
+        "prompt": "Test with custom width and height",
+        "width": 640,
+        "height": 360,
+        "duration_seconds": 1.5,
+        "fps": 15
+      },
+      "timeout": 120000
+    },
+    {
+      "name": "negative_prompt_test",
+      "input": {
+        "prompt": "A serene mountain landscape",
+        "negative_prompt": "blurry, low quality, distorted",
+        "resolution_preset": "480p",
+        "duration_seconds": 2.0,
+        "fps": 16,
+        "guidance_scale": 7.0
+      },
+      "timeout": 180000
+    },
+    {
+      "name": "high_fps_test",
+      "input": {
+        "prompt": "Fast-moving water cascading down rocks",
+        "resolution_preset": "square_small",
+        "duration_seconds": 1.0,
+        "fps": 30
+      },
+      "timeout": 120000
+    },
+    {
+      "name": "long_duration_test",
+      "input": {
+        "prompt": "Clouds slowly moving across the sky",
+        "resolution_preset": "480p_vertical",
+        "duration_seconds": 5.0,
+        "fps": 12
+      },
+      "timeout": 600000
+    },
+    {
+      "name": "seed_reproducibility_test",
+      "input": {
+        "prompt": "A rotating geometric pattern",
+        "resolution_preset": "square",
+        "duration_seconds": 1.5,
+        "fps": 20,
+        "seed": 42
+      },
+      "timeout": 180000
+    },
+    {
+      "name": "error_handling_invalid_preset_test",
+      "input": {
+        "prompt": "This should fail",
+        "resolution_preset": "invalid_preset",
+        "duration_seconds": 1.0,
+        "fps": 10
+      },
+      "timeout": 30000,
+      "expect_error": true
+    },
+    {
+      "name": "error_handling_empty_prompt_test",
+      "input": {
+        "prompt": "",
+        "resolution_preset": "480p",
+        "duration_seconds": 1.0,
+        "fps": 10
+      },
+      "timeout": 30000,
+      "expect_error": true
+    },
+    {
+      "name": "error_handling_invalid_fps_test",
+      "input": {
+        "prompt": "Test invalid FPS",
+        "resolution_preset": "480p", 
+        "duration_seconds": 1.0,
+        "fps": 70
+      },
+      "timeout": 30000,
+      "expect_error": true
     }
   ],
   "config": {
