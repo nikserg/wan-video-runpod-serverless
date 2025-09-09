@@ -2,8 +2,8 @@ import runpod
 import base64
 
 
-def handler(event):
-    input_data = event["input"]
+def handler(job):
+    input_data = job["input"]
     prompt = input_data["prompt"]
     image_base64 = input_data["image"]
     # Base 64 decode the image
