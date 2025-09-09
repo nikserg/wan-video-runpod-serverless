@@ -8,10 +8,12 @@ RunPod serverless endpoint for WAN 2.2 video generation supporting both text-to-
 
 - 🎥 **Text-to-Video (T2V)** - Generate videos from text prompts
 - 🖼️ **Image-to-Video (I2V)** - Animate static images with text guidance  
+- 📐 **Resolution Presets** - 480p, 720p, vertical, square formats
 - ⏱️ **Configurable Duration** - Set video length in seconds
 - 🎬 **Adjustable FPS** - Control frame rate (1-60 FPS)
 - 📦 **Base64 MP4 Output** - Ready-to-use video format
 - 🎨 **LoRA Support** - Load custom LoRAs from CivitAI
+- 🔧 **Multiple Models** - From 3.5GB to 80GB VRAM options
 - ⚡ **GPU Optimized** - Supports consumer and enterprise GPUs
 - 🔄 **Auto Model Download** - Models cached in persistent volumes
 
