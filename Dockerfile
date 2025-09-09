@@ -16,8 +16,8 @@ ENV FLASH_ATTENTION_FORCE_BUILD=TRUE
 # Python dependencies
 COPY requirements.txt .
 RUN python3.10 -m pip install --upgrade pip && \
-    python3.10 -m pip install wheel && \
-    python3.10 -m pip install ninja && \
+    python3.10 -m pip install wheel ninja packaging setuptools && \
+    python3.10 -m pip install torch>=2.4.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
     python3.10 -m pip install --upgrade -r /requirements.txt --no-cache-dir && \
     rm /requirements.txt
 

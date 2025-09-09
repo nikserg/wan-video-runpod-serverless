@@ -59,6 +59,7 @@ def handler(job):
         # Optional parameters with defaults
         image_base64 = input_data.get("image")
         negative_prompt = input_data.get("negative_prompt", "")
+        resolution_preset = input_data.get("resolution_preset")  # e.g., "480p", "720p"
         width = input_data.get("width", 1280)
         height = input_data.get("height", 720)
         duration_seconds = input_data.get("duration_seconds", 5.0)  # Video length in seconds
@@ -76,6 +77,11 @@ def handler(job):
         
         if width <= 0 or height <= 0:
             return {"error": "width and height must be greater than 0"}
+        
+        # Validate resolution preset if provided
+        valid_presets = ["480p", "720p", "720p_vertical", "480p_vertical", "square", "square_small"]
+        if resolution_preset and resolution_preset not in valid_presets:
+            return {"error": f"Invalid resolution_preset. Valid options: {valid_presets}"}
         
         # Process image if provided
         image_data = None
@@ -98,7 +104,8 @@ def handler(job):
             fps=fps,
             guidance_scale=guidance_scale,
             num_inference_steps=num_inference_steps,
-            seed=seed
+            seed=seed,
+            resolution_preset=resolution_preset
         )
         
         return {

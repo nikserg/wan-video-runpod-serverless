@@ -9,21 +9,42 @@
     "containerDiskInGb": 100,
     "presets": [
       {
-        "name": "TI2V-5B (Consumer GPU)",
+        "name": "VACE-1.3B (Low VRAM - 3.5GB)",
+        "defaults": {
+          "WAN_MODEL_TYPE": "VACE-1.3B",
+          "USE_MOCK_GENERATOR": "false"
+        }
+      },
+      {
+        "name": "I2V-14B-720P (24GB GPU)",
+        "defaults": {
+          "WAN_MODEL_TYPE": "I2V-14B-720P",
+          "USE_MOCK_GENERATOR": "false"
+        }
+      },
+      {
+        "name": "I2V-14B-480P (17GB GPU)",
+        "defaults": {
+          "WAN_MODEL_TYPE": "I2V-14B-480P",
+          "USE_MOCK_GENERATOR": "false"
+        }
+      },
+      {
+        "name": "TI2V-5B (Consumer GPU - 24GB)",
         "defaults": {
           "WAN_MODEL_TYPE": "TI2V-5B",
           "USE_MOCK_GENERATOR": "false"
         }
       },
       {
-        "name": "T2V-A14B (High-end GPU)",
+        "name": "T2V-A14B (High-end GPU - 80GB)",
         "defaults": {
           "WAN_MODEL_TYPE": "T2V-A14B",
           "USE_MOCK_GENERATOR": "false"
         }
       },
       {
-        "name": "I2V-A14B (High-end GPU)",
+        "name": "I2V-A14B (High-end GPU - 80GB)",
         "defaults": {
           "WAN_MODEL_TYPE": "I2V-A14B",
           "USE_MOCK_GENERATOR": "false"
@@ -43,9 +64,9 @@
         "input": {
           "name": "WAN Model Type",
           "type": "select",
-          "description": "Choose WAN 2.2 model variant",
-          "options": ["TI2V-5B", "T2V-A14B", "I2V-A14B"],
-          "default": "TI2V-5B"
+          "description": "Choose WAN model variant based on your GPU VRAM",
+          "options": ["VACE-1.3B", "I2V-14B-480P", "I2V-14B-720P", "TI2V-5B", "T2V-A14B", "I2V-A14B"],
+          "default": "I2V-14B-720P"
         }
       },
       {

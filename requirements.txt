@@ -16,6 +16,8 @@ aiofiles
 safetensors
 omegaconf
 einops
+packaging
+setuptools
 flash_attn
 deepspeed
 fairscale

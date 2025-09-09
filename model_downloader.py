@@ -112,7 +112,7 @@ class ModelDownloader:
     
     def setup_models(self):
         """Setup all required models and LoRAs"""
-        logger.info("Setting up WAN 2.2 models and LoRAs...")
+        logger.info("Setting up WAN models and LoRAs...")
         
         # Get model type from environment variable
         model_type = os.getenv("WAN_MODEL_TYPE", "TI2V-5B")
@@ -123,6 +123,12 @@ class ModelDownloader:
             model_name = "Wan-AI/Wan2.2-T2V-A14B"
         elif model_type == "I2V-A14B":
             model_name = "Wan-AI/Wan2.2-I2V-A14B"
+        elif model_type == "I2V-14B-720P":
+            model_name = "Wan-AI/Wan2.1-I2V-14B-720P"
+        elif model_type == "I2V-14B-480P":
+            model_name = "Wan-AI/Wan2.1-I2V-14B-480P"
+        elif model_type == "VACE-1.3B":
+            model_name = "Wan-AI/Wan2.1-VACE-1.3B"
         else:
             logger.warning(f"Unknown model type: {model_type}, defaulting to TI2V-5B")
             model_name = "Wan-AI/Wan2.2-TI2V-5B"

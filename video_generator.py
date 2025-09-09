@@ -30,24 +30,76 @@ class VideoGenerator:
         self.model = None
         self.load_model()
     
+    def get_resolution_preset(self, resolution_preset):
+        """Get width and height from resolution preset"""
+        resolutions = {
+            "480p": (854, 480),
+            "720p": (1280, 720),
+            "720p_vertical": (720, 1280),
+            "480p_vertical": (480, 854),
+            "square": (720, 720),
+            "square_small": (480, 480)
+        }
+        
+        if resolution_preset in resolutions:
+            return resolutions[resolution_preset]
+        else:
+            # Default to 720p if preset not found
+            logger.warning(f"Unknown resolution preset: {resolution_preset}, defaulting to 720p")
+            return resolutions["720p"]
+    
+    def validate_resolution_for_model(self, width, height, model_type):
+        """Validate if resolution is supported by the model"""
+        # Model-specific resolution constraints
+        if model_type == "I2V-14B-480P":
+            if max(width, height) > 854:
+                logger.warning(f"Model {model_type} is optimized for 480p, reducing resolution from {width}x{height}")
+                if width >= height:
+                    return 854, 480
+                else:
+                    return 480, 854
+        elif model_type == "VACE-1.3B":
+            # VACE-1.3B supports 480x832 or 832x480
+            if width >= height:
+                return min(832, width), min(480, height)
+            else:
+                return min(480, width), min(832, height)
+        
+        return width, height
+    
     def load_model(self):
-        """Load WAN 2.2 model"""
+        """Load WAN model"""
         try:
             if WanVideo is None:
                 raise ImportError("WAN2 modules not available")
             
-            logger.info(f"Loading WAN 2.2 {self.model_type} model from {self.model_path}")
+            logger.info(f"Loading WAN {self.model_type} model from {self.model_path}")
             
             # Configure model parameters based on type
-            if self.model_type == "TI2V-5B":
-                # Consumer GPU friendly settings
+            if self.model_type in ["TI2V-5B"]:
+                # WAN 2.2 TI2V-5B - Consumer GPU friendly
                 config = {
                     "ckpt_dir": self.model_path,
                     "offload_model": True,
                     "convert_model_dtype": True,
                     "t5_cpu": True,
                 }
-            else:  # A14B models
+            elif self.model_type in ["I2V-14B-720P", "I2V-14B-480P"]:
+                # WAN 2.1 I2V models - 24GB VRAM optimized
+                config = {
+                    "ckpt_dir": self.model_path,
+                    "offload_model": True,
+                    "convert_model_dtype": True,
+                    "enable_vae_slicing": True,
+                }
+            elif self.model_type == "VACE-1.3B":
+                # WAN 2.1 VACE - Very efficient model
+                config = {
+                    "ckpt_dir": self.model_path,
+                    "offload_model": False,  # Small enough to keep in VRAM
+                    "convert_model_dtype": True,
+                }
+            else:  # A14B and other high-end models
                 config = {
                     "ckpt_dir": self.model_path,
                     "offload_model": True,
@@ -94,11 +146,20 @@ class VideoGenerator:
                       fps=24,
                       guidance_scale=5.0,
                       num_inference_steps=50,
-                      seed=None):
-        """Generate video using WAN 2.2"""
+                      seed=None,
+                      resolution_preset=None):
+        """Generate video using WAN models"""
         try:
             if self.model is None:
                 raise RuntimeError("Model not loaded")
+            
+            # Handle resolution preset if provided
+            if resolution_preset:
+                width, height = self.get_resolution_preset(resolution_preset)
+                logger.info(f"Using resolution preset '{resolution_preset}': {width}x{height}")
+            
+            # Validate resolution for model
+            width, height = self.validate_resolution_for_model(width, height, self.model_type)
             
             # Calculate number of frames from duration and FPS
             num_frames = self.calculate_frames(duration_seconds, fps)
@@ -108,12 +169,15 @@ class VideoGenerator:
                 torch.manual_seed(seed)
                 np.random.seed(seed)
             
-            # Determine generation type
-            if image is not None and self.model_type in ["TI2V-5B", "I2V-A14B"]:
-                # Image-to-video or text-image-to-video
+            # Determine generation type based on model capabilities
+            i2v_models = ["TI2V-5B", "I2V-A14B", "I2V-14B-720P", "I2V-14B-480P", "VACE-1.3B"]
+            t2v_models = ["T2V-A14B", "TI2V-5B"]
+            
+            if image is not None and self.model_type in i2v_models:
+                # Image-to-video generation
                 processed_image = self.preprocess_image(image)
                 
-                logger.info(f"Generating I2V/TI2V: {width}x{height}, {duration_seconds}s ({num_frames} frames), {fps} FPS")
+                logger.info(f"Generating I2V with {self.model_type}: {width}x{height}, {duration_seconds}s ({num_frames} frames), {fps} FPS")
                 
                 video_frames = self.model.generate(
                     prompt=prompt,
@@ -125,9 +189,9 @@ class VideoGenerator:
                     guidance_scale=guidance_scale,
                     num_inference_steps=num_inference_steps
                 )
-            else:
-                # Text-to-video
-                logger.info(f"Generating T2V: {width}x{height}, {duration_seconds}s ({num_frames} frames), {fps} FPS")
+            elif image is None and self.model_type in t2v_models:
+                # Text-to-video generation
+                logger.info(f"Generating T2V with {self.model_type}: {width}x{height}, {duration_seconds}s ({num_frames} frames), {fps} FPS")
                 
                 video_frames = self.model.generate(
                     prompt=prompt,
@@ -138,6 +202,12 @@ class VideoGenerator:
                     guidance_scale=guidance_scale,
                     num_inference_steps=num_inference_steps
                 )
+            else:
+                # Model doesn't support this mode
+                if image is not None:
+                    raise ValueError(f"Model {self.model_type} does not support image-to-video generation")
+                else:
+                    raise ValueError(f"Model {self.model_type} does not support text-to-video generation")
             
             # Convert frames to video
             return self.frames_to_mp4(video_frames, fps)
@@ -208,13 +278,28 @@ class MockVideoGenerator:
         """Calculate number of frames from duration and FPS"""
         return int(duration_seconds * fps)
     
-    def generate_video(self, prompt, image=None, duration_seconds=5.0, fps=24, **kwargs):
+    def generate_video(self, prompt, image=None, duration_seconds=5.0, fps=24, resolution_preset=None, **kwargs):
         """Generate a mock video for testing"""
         try:
-            # Calculate frames from duration
-            num_frames = self.calculate_frames(duration_seconds, fps)
+            # Handle resolution preset
             width = kwargs.get('width', 1280)
             height = kwargs.get('height', 720)
+            
+            if resolution_preset:
+                resolutions = {
+                    "480p": (854, 480),
+                    "720p": (1280, 720),
+                    "720p_vertical": (720, 1280),
+                    "480p_vertical": (480, 854),
+                    "square": (720, 720),
+                    "square_small": (480, 480)
+                }
+                if resolution_preset in resolutions:
+                    width, height = resolutions[resolution_preset]
+                    logger.info(f"Mock generator using resolution preset '{resolution_preset}': {width}x{height}")
+            
+            # Calculate frames from duration
+            num_frames = self.calculate_frames(duration_seconds, fps)
             
             logger.info(f"Generating mock video: {width}x{height}, {duration_seconds}s ({num_frames} frames), {fps} FPS")
             
@@ -225,13 +310,19 @@ class MockVideoGenerator:
                 color = (i * 8 % 255, (i * 16) % 255, (i * 32) % 255)
                 frame = np.full((height, width, 3), color, dtype=np.uint8)
                 
-                # Add text overlay
+                # Add text overlay with resolution info
                 cv2.putText(frame, f"Frame {i+1}/{num_frames}", (50, 100), 
                            cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3)
-                cv2.putText(frame, f"{duration_seconds}s @ {fps}fps", (50, 150), 
+                cv2.putText(frame, f"{width}x{height} @ {fps}fps", (50, 150), 
                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-                cv2.putText(frame, prompt[:50], (50, 200), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                if resolution_preset:
+                    cv2.putText(frame, f"Preset: {resolution_preset}", (50, 200), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                    cv2.putText(frame, prompt[:40], (50, 250), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                else:
+                    cv2.putText(frame, prompt[:50], (50, 200), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
                 frames.append(frame)
             
             return self.frames_to_mp4(frames, fps)
