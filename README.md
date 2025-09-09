@@ -285,7 +285,11 @@ docker run -e USE_MOCK_GENERATOR=true wan-video-serverless
 
 ## License
 
-Apache 2.0 License - see [WAN 2.2 repository](https://github.com/Wan-Video/Wan2.2) for model license details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+**Model Licenses:**
+- WAN 2.2 models: Apache 2.0 License
+- See individual model repositories on Hugging Face for specific licensing terms
 
 ## Contributing
 
