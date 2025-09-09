@@ -3,7 +3,7 @@
   "description": "An example description",
   "type": "serverless",
   "category": "video",
-  "iconUrl": "https://raw.githubusercontent.com/Wan-Video/Wan2.1/refs/heads/main/assets/logo.png",
+  "iconUrl": "https://raw.githubusercontent.com/nikserg/wan-video-runpod-serverless/refs/heads/main/logo.png",
   "config": {
     "runsOn": "GPU",
     "containerDiskInGb": 20,
