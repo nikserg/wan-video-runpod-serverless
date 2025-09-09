@@ -1,6 +1,6 @@
 {
-  "title": "WAN 2.2 Video Generator",
-  "description": "WAN 2.2 video generation serverless endpoint supporting text-to-video and image-to-video generation with configurable duration and FPS",
+  "title": "WAN 2.2 Video (I2V & T2V) with LoRA",
+  "description": "WAN 2.2 video generation, I2V & T2V, LoRA support, auto download models and LoRAs, configurable duration, resolution & FPS, model choices, resolution presets.",
   "type": "serverless",
   "category": "video",
   "iconUrl": "https://raw.githubusercontent.com/nikserg/wan-video-runpod-serverless/refs/heads/main/logo.png",
