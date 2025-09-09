@@ -1,33 +1,88 @@
 {
-  "title": "Wan Video Runpod Serverless",
-  "description": "An example description",
+  "title": "WAN 2.2 Video Generator",
+  "description": "WAN 2.2 video generation serverless endpoint supporting text-to-video and image-to-video generation with configurable duration and FPS",
   "type": "serverless",
   "category": "video",
   "iconUrl": "https://raw.githubusercontent.com/nikserg/wan-video-runpod-serverless/refs/heads/main/logo.png",
   "config": {
     "runsOn": "GPU",
-    "containerDiskInGb": 20,
+    "containerDiskInGb": 100,
     "presets": [
       {
-        "name": "Preset 1",
+        "name": "TI2V-5B (Consumer GPU)",
         "defaults": {
-          "STATIC_1": "value_1",
-          "STRING_1": "default value 1"
+          "WAN_MODEL_TYPE": "TI2V-5B",
+          "USE_MOCK_GENERATOR": "false"
+        }
+      },
+      {
+        "name": "T2V-A14B (High-end GPU)",
+        "defaults": {
+          "WAN_MODEL_TYPE": "T2V-A14B",
+          "USE_MOCK_GENERATOR": "false"
+        }
+      },
+      {
+        "name": "I2V-A14B (High-end GPU)",
+        "defaults": {
+          "WAN_MODEL_TYPE": "I2V-A14B",
+          "USE_MOCK_GENERATOR": "false"
+        }
+      },
+      {
+        "name": "Mock Generator (Testing)",
+        "defaults": {
+          "WAN_MODEL_TYPE": "TI2V-5B",
+          "USE_MOCK_GENERATOR": "true"
         }
       }
     ],
     "env": [
       {
-        "key": "STATIC_VAR",
-        "value": "static_value"
+        "key": "WAN_MODEL_TYPE",
+        "input": {
+          "name": "WAN Model Type",
+          "type": "select",
+          "description": "Choose WAN 2.2 model variant",
+          "options": ["TI2V-5B", "T2V-A14B", "I2V-A14B"],
+          "default": "TI2V-5B"
+        }
       },
       {
-        "key": "STRING_VAR",
+        "key": "LORA_URL_1",
         "input": {
-          "name": "String Input",
+          "name": "LoRA URL 1",
           "type": "string",
-          "description": "A string input test",
-          "default": "new default value"
+          "description": "First LoRA download URL (e.g., from CivitAI)",
+          "default": ""
+        }
+      },
+      {
+        "key": "LORA_URL_2",
+        "input": {
+          "name": "LoRA URL 2",
+          "type": "string",
+          "description": "Second LoRA download URL (optional)",
+          "default": ""
+        }
+      },
+      {
+        "key": "LORA_URL_3",
+        "input": {
+          "name": "LoRA URL 3",
+          "type": "string",
+          "description": "Third LoRA download URL (optional)",
+          "default": ""
+        }
+      },
+      {
+        "key": "USE_MOCK_GENERATOR",
+        "input": {
+          "name": "Use Mock Generator",
+          "type": "select",
+          "description": "Use mock generator for testing (faster startup)",
+          "options": ["false", "true"],
+          "default": "false"
         }
       }
     ]

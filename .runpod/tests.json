@@ -1,12 +1,34 @@
 {
   "tests": [
     {
-      "name": "validation_text_input",
+      "name": "text_to_video_test",
       "input": {
-        "text": "Hello world",
-        "language": "en"
+        "prompt": "A beautiful sunset over the ocean with waves gently crashing on the beach",
+        "duration_seconds": 3.0,
+        "fps": 24,
+        "width": 1280,
+        "height": 720
       },
-      "timeout": 10000
+      "timeout": 300000
+    },
+    {
+      "name": "image_to_video_test",
+      "input": {
+        "prompt": "Camera slowly pans across the landscape",
+        "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+        "duration_seconds": 2.0,
+        "fps": 16
+      },
+      "timeout": 300000
+    },
+    {
+      "name": "mock_generator_test",
+      "input": {
+        "prompt": "Test video generation with mock generator",
+        "duration_seconds": 1.0,
+        "fps": 12
+      },
+      "timeout": 60000
     }
   ],
   "config": {
@@ -14,8 +36,16 @@
     "gpuCount": 1,
     "env": [
       {
-        "key": "ENV_KEY_HERE",
-        "value": "ENV_VALUE_HERE"
+        "key": "WAN_MODEL_TYPE",
+        "value": "TI2V-5B"
+      },
+      {
+        "key": "USE_MOCK_GENERATOR",
+        "value": "true"
+      },
+      {
+        "key": "LORA_URL_1",
+        "value": ""
       }
     ],
     "allowedCudaVersions": [
