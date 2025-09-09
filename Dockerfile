@@ -13,12 +13,28 @@ RUN apt-get update && apt-get install -y \
 ENV TORCH_CUDA_ARCH_LIST="8.6"
 ENV FLASH_ATTENTION_FORCE_BUILD=TRUE
 
-# Python dependencies
+# Python dependencies - staged installation for better reliability
 COPY requirements.txt .
+
+# Stage 1: Essential build tools and PyTorch
 RUN python3.10 -m pip install --upgrade pip && \
-    python3.10 -m pip install wheel ninja packaging setuptools && \
-    python3.10 -m pip install torch>=2.4.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
-    python3.10 -m pip install --upgrade -r /requirements.txt --no-cache-dir && \
+    python3.10 -m pip install wheel ninja packaging setuptools
+
+# Stage 2: PyTorch with CUDA support
+RUN python3.10 -m pip install torch>=2.4.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Stage 3: Core ML libraries
+RUN python3.10 -m pip install transformers>=4.41.0 diffusers>=0.30.0 accelerate>=0.34.0 huggingface_hub>=0.24.0
+
+# Stage 4: Heavy optimization packages - using precompiled wheels where possible
+RUN python3.10 -m pip install flash-attn --find-links https://github.com/Dao-AILab/flash-attention/releases --no-build-isolation || \
+    python3.10 -m pip install flash_attn --timeout 3600 --no-cache-dir
+RUN python3.10 -m pip install xformers --extra-index-url https://download.pytorch.org/whl/cu121 || \
+    python3.10 -m pip install xformers --timeout 1800 --no-cache-dir
+RUN python3.10 -m pip install deepspeed fairscale
+
+# Stage 5: Remaining packages
+RUN python3.10 -m pip install opencv-python pillow numpy requests httpx aiofiles safetensors omegaconf einops runpod && \
     rm /requirements.txt
 
 # Create directories for models and LoRAs
