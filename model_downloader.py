@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ModelDownloader:
-    def __init__(self, models_dir="/models", loras_dir="/loras"):
+    def __init__(self, models_dir="/workspace/models", loras_dir="/workspace/loras"):
         self.models_dir = Path(models_dir)
         self.loras_dir = Path(loras_dir)
         self.models_dir.mkdir(parents=True, exist_ok=True)
