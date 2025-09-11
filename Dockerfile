@@ -18,11 +18,11 @@ ENV HF_HUB_ENABLE_HF_TRANSFER=1
 # Create directories
 RUN mkdir -p /models /loras /workspace
 
-# Install PyTorch 2.8 first to match flash_attn wheel
-RUN python3.10 -m pip install torch>=2.8.0 torchvision --index-url https://download.pytorch.org/whl/cu121
+# Install PyTorch 2.5 with compatible torchvision for WAN 2.2
+RUN python3.10 -m pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu121
 
-# Install prebuilt flash_attn wheel (compiled for torch 2.8)
-RUN python3.10 -m pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.3.14/flash_attn-2.6.3+cu124torch2.8-cp310-cp310-linux_x86_64.whl
+# Install prebuilt flash_attn wheel (compiled for torch 2.5)
+RUN python3.10 -m pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.3.14/flash_attn-2.6.3+cu124torch2.5-cp310-cp310-linux_x86_64.whl
 
 # Install Wan2.2 from source (dependencies already satisfied)
 RUN cd /workspace && \
