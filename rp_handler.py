@@ -31,7 +31,8 @@ def initialize_models():
         generator = create_generator(
             model_path=model_info["model_path"],
             model_type=model_info["model_type"],
-            use_mock=use_mock
+            use_mock=use_mock,
+            lora_paths=model_info.get("lora_paths", [])
         )
         
         logger.info("Video generator initialized successfully")
@@ -115,7 +116,8 @@ def handler(job):
             "fps": fps,
             "resolution": f"{width}x{height}",
             "has_input_image": image_data is not None,
-            "model_type": model_info.get("model_type", "unknown") if model_info else "mock"
+            "model_type": model_info.get("model_type", "unknown") if model_info else "mock",
+            "loras_loaded": len(model_info.get("lora_paths", [])) if model_info else 0
         }
         
     except Exception as e:

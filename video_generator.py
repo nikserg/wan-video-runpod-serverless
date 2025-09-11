@@ -25,11 +25,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class VideoGenerator:
-    def __init__(self, model_path, model_type="TI2V-5B", device="cuda"):
+    def __init__(self, model_path, model_type="TI2V-5B", device="cuda", lora_paths=None):
         self.model_path = model_path
         self.model_type = model_type
         self.device = device
+        self.lora_paths = lora_paths or []
         self.model = None
+        self.loaded_loras = []
         self.load_model()
     
     def get_resolution_preset(self, resolution_preset):
@@ -111,9 +113,65 @@ class VideoGenerator:
             self.model = WanVideo(**config)
             logger.info("Model loaded successfully")
             
+            # Load LoRAs if provided
+            self.load_loras()
+            
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
             raise
+    
+    def load_loras(self):
+        """Load LoRAs with memory optimization"""
+        if not self.lora_paths or self.model is None:
+            return
+        
+        try:
+            for lora_path in self.lora_paths:
+                if not os.path.exists(lora_path):
+                    logger.warning(f"LoRA file not found: {lora_path}")
+                    continue
+                
+                logger.info(f"Loading LoRA: {lora_path}")
+                
+                # Load LoRA with diffusers if available
+                if hasattr(self.model, 'load_lora_weights'):
+                    # For diffusers-based models
+                    self.model.load_lora_weights(lora_path)
+                    self.loaded_loras.append(lora_path)
+                    logger.info(f"LoRA loaded successfully: {lora_path}")
+                elif hasattr(self.model, 'load_adapter'):
+                    # Alternative LoRA loading method
+                    self.model.load_adapter(lora_path)
+                    self.loaded_loras.append(lora_path)
+                    logger.info(f"LoRA adapter loaded: {lora_path}")
+                else:
+                    logger.warning(f"Model does not support LoRA loading: {type(self.model)}")
+                    
+        except Exception as e:
+            logger.error(f"Failed to load LoRAs: {e}")
+    
+    def unload_loras(self):
+        """Unload LoRAs to free memory"""
+        if not self.loaded_loras or self.model is None:
+            return
+        
+        try:
+            if hasattr(self.model, 'unload_lora_weights'):
+                self.model.unload_lora_weights()
+                logger.info(f"Unloaded {len(self.loaded_loras)} LoRAs")
+            elif hasattr(self.model, 'unload_adapter'):
+                for lora_path in self.loaded_loras:
+                    self.model.unload_adapter()
+                logger.info(f"Unloaded {len(self.loaded_loras)} LoRA adapters")
+            
+            self.loaded_loras = []
+            
+            # Force garbage collection to free memory
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                
+        except Exception as e:
+            logger.error(f"Failed to unload LoRAs: {e}")
     
     def preprocess_image(self, image_data):
         """Preprocess image for WAN 2.2"""
@@ -361,9 +419,9 @@ class MockVideoGenerator:
             logger.error(f"Failed to convert mock frames to MP4: {e}")
             raise
 
-def create_generator(model_path, model_type="TI2V-5B", device="cuda", use_mock=False):
+def create_generator(model_path, model_type="TI2V-5B", device="cuda", use_mock=False, lora_paths=None):
     """Factory function to create video generator"""
     if use_mock or WanVideo is None:
         return MockVideoGenerator(model_path, model_type, device)
     else:
-        return VideoGenerator(model_path, model_type, device)
+        return VideoGenerator(model_path, model_type, device, lora_paths)
