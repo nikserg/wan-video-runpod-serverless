@@ -4,12 +4,3 @@ requests
 pillow
 huggingface_hub>=0.24.0
 hf_transfer
-
-# Optional ML acceleration (may be needed by WAN 2.2)
-xformers
-deepspeed
-fairscale
-
-# Python utilities (may be needed by dependencies)
-packaging
-setuptools

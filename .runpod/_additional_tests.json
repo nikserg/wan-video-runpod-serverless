@@ -35,8 +35,7 @@
       "name": "square_video_test",
       "input": {
         "prompt": "Coffee cup with steam rising",
-        "resolution_pr
-        eset": "square",
+        "resolution_preset": "square",
         "duration_seconds": 2.0,
         "fps": 18
       },
