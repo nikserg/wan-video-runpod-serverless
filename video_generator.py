@@ -13,10 +13,12 @@ import numpy as np
 sys.path.append("/workspace/Wan2.2")
 
 try:
-    from wan2 import WanVideo
-    from wan2.utils import save_video
+    import wan
+    from wan.models.video_generation import VideoGeneration
+    from wan.utils.video import save_video_frames
+    WanVideo = VideoGeneration
 except ImportError as e:
-    logging.warning(f"Could not import WAN2 modules: {e}")
+    logging.warning(f"Could not import WAN modules: {e}")
     WanVideo = None
 
 logging.basicConfig(level=logging.INFO)
