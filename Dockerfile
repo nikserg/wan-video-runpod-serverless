@@ -1,4 +1,4 @@
-FROM runpod/base:0.7.0-ubuntu2004-cuda1281
+FROM runpod/base:0.7.0-ubuntu2404-cuda1281
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
