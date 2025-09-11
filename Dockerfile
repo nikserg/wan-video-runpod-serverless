@@ -1,4 +1,4 @@
-FROM runpod/base:0.7.0-ubuntu2404-cuda1281
+FROM runpod/base:0.7.0-ubuntu2204-cuda1241
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -17,7 +17,7 @@ RUN mkdir -p /workspace
 
 RUN python3.10 -m pip install https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.3.14/flash_attn-2.6.3+cu124torch2.5-cp310-cp310-linux_x86_64.whl
 
-RUN python3.10 -m pip install torchvision --index-url https://download.pytorch.org/whl/cu121
+RUN python3.10 -m pip install torchvision --index-url https://download.pytorch.org/whl/cu124
 
 
 # Install additional requirements
