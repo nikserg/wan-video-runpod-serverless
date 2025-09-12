@@ -96,12 +96,59 @@ def log_model_device_location(model, model_name="Model"):
 def ensure_config_completeness(config, model_type="unknown"):
     """Ensure config has all required attributes for WAN models"""
     required_attrs = {
+        # T5 Text Encoder
         't5_checkpoint': 'models_t5_umt5-xxl-enc-bf16.pth',
         't5_tokenizer': 'google/umt5-xxl',
+        't5_model': 'umt5_xxl',
+        't5_dtype': torch.bfloat16,
+        'text_len': 512,
+        
+        # VAE
         'vae_checkpoint': 'Wan2.2_VAE.pth',
+        'vae_stride': (4, 16, 16),
+        
+        # Transformer
+        'patch_size': (1, 2, 2),
+        'param_dtype': torch.bfloat16,
+        'dim': 3072,
+        'ffn_dim': 14336,
+        'freq_dim': 256,
+        'num_heads': 24,
+        'num_layers': 30,
+        'window_size': (-1, -1),
+        'qk_norm': True,
+        'cross_attn_norm': True,
+        'eps': 1e-6,
+        
+        # Inference
+        'num_train_timesteps': 1000,
         'boundary': 0.85,
         'sample_shift': 5.0,
+        'sample_fps': 24,
+        'sample_steps': 50,
+        'sample_guide_scale': 5.0,
+        'frame_num': 121,
+        'sample_neg_prompt': '色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走',
+        
+        # Model checkpoints (may not exist for all models)
+        'low_noise_checkpoint': 'low_noise_model',
+        'high_noise_checkpoint': 'high_noise_model',
     }
+    
+    # Model-specific adjustments
+    if "VACE" in model_type:
+        # VACE models may have different VAE checkpoint
+        required_attrs['vae_checkpoint'] = 'Wan2.1_VAE.pth'  # VACE uses 2.1 VAE
+        required_attrs['boundary'] = 0.80  # Lower boundary for efficiency
+        required_attrs['sample_shift'] = 3.0  # Different shift for VACE
+        required_attrs['frame_num'] = 61  # Shorter videos for efficiency
+    elif "I2V-14B" in model_type:
+        # I2V models use specific VAE
+        required_attrs['vae_checkpoint'] = 'Wan2.1_VAE.pth'
+    elif "TI2V-5B" in model_type:
+        # TI2V-5B uses WAN 2.2 VAE
+        required_attrs['vae_checkpoint'] = 'Wan2.2_VAE.pth'
+        required_attrs['frame_num'] = 121
     
     added_attrs = []
     for attr, default_value in required_attrs.items():
