@@ -30,9 +30,7 @@ class ModelDownloader:
         try:
             snapshot_download(
                 repo_id=model_name,
-                local_dir=str(model_path),
-                local_dir_use_symlinks=False,
-                resume_download=True
+                local_dir=str(model_path)
             )
             logger.info(f"Successfully downloaded {model_name} to {model_path}")
             return str(model_path)
@@ -43,15 +41,22 @@ class ModelDownloader:
     def download_civitai_lora(self, url, filename=None):
         """Download LoRA from CivitAI URL"""
         try:
-            # Extract model ID from URL
+            # Extract model version ID from URL and convert to download API URL
             if "civitai.com" in url:
+                download_url = url
+                model_id = None
+                
                 # Handle different CivitAI URL formats
-                if "/models/" in url:
-                    model_id = url.split("/models/")[1].split("/")[0]
+                if "modelVersionId=" in url:
+                    # Extract model version ID from URL parameter
+                    model_version_id = url.split("modelVersionId=")[1].split("&")[0]
+                    download_url = f"https://civitai.com/api/download/models/{model_version_id}"
+                    model_id = model_version_id
                 elif "/api/download/models/" in url:
                     model_id = url.split("/api/download/models/")[1].split("?")[0]
+                    download_url = url
                 else:
-                    model_id = url.split("/")[-1].split("?")[0]
+                    raise ValueError(f"Cannot parse CivitAI URL: {url}")
                 
                 if not filename:
                     filename = f"lora_{model_id}.safetensors"
@@ -62,14 +67,14 @@ class ModelDownloader:
                     logger.info(f"LoRA already exists at {lora_path}")
                     return str(lora_path)
                 
-                logger.info(f"Downloading LoRA from: {url}")
+                logger.info(f"Downloading LoRA from: {download_url}")
                 
                 # Download with proper headers
                 headers = {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
                 }
                 
-                response = requests.get(url, headers=headers, stream=True)
+                response = requests.get(download_url, headers=headers, stream=True)
                 response.raise_for_status()
                 
                 with open(lora_path, 'wb') as f:

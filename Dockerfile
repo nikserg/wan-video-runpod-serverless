@@ -8,8 +8,7 @@ RUN apt-get update && apt-get install -y \
 # Set environment variable for HuggingFace large file transfers (optional)
 ENV HF_HUB_ENABLE_HF_TRANSFER=1
 
-# Create workspace directory
-RUN mkdir -p /workspace
+RUN mkdir -p /app
 
 # --- Install PyTorch 2.7 (CUDA 12.8) and torchvision ---
 RUN python3.10 -m pip install --upgrade pip && \
@@ -27,17 +26,17 @@ COPY requirements.txt /tmp/requirements.txt
 RUN python3.10 -m pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
 # Clone and install Wan2.2
-RUN git clone https://github.com/Wan-Video/Wan2.2.git /workspace/Wan2.2 && \
-    rm -rf /workspace/Wan2.2/.git
-
-# Show all packages installed
-RUN python3.10 -m pip list
+RUN git clone https://github.com/Wan-Video/Wan2.2.git /app/Wan2.2 && \
+    cd /app/Wan2.2 && \
+    python3.10 -m pip install -e . && \
+    cd /app && \
+    rm -rf /app/Wan2.2/.git
 
 # Copy application files
-COPY rp_handler.py /rp_handler.py
-COPY model_downloader.py /model_downloader.py
-COPY video_generator.py /video_generator.py
-COPY check_cuda.py /check_cuda.py
+COPY rp_handler.py /app/rp_handler.py
+COPY model_downloader.py /app/model_downloader.py
+COPY video_generator.py /app/video_generator.py
+COPY check_cuda.py /app/check_cuda.py
 
-WORKDIR /workspace/Wan2.2
-CMD ["python3.10", "-u", "/rp_handler.py"]
+WORKDIR /app
+CMD ["python3.10", "-u", "/app/rp_handler.py"]
