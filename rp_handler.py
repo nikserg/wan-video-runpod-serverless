@@ -93,9 +93,11 @@ def handler(job):
         image_data = None
         if image_base64:
             try:
-                image_data = base64.b64decode(image_base64)
+                # Pass the base64 string directly to video generator
+                # The video generator will handle the decoding
+                image_data = image_base64
             except Exception as e:
-                return {"error": f"Invalid image base64: {e}"}
+                return {"error": f"Invalid image data: {e}"}
         
         logger.info(f"Generating video: {prompt[:50]}... ({width}x{height}, {duration_seconds}s @ {fps}fps)")
         

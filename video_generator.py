@@ -9,16 +9,20 @@ from PIL import Image
 import cv2
 import numpy as np
 
-# Add WAN 2.2 to path
-sys.path.append("/workspace/Wan2.2")
+# WAN 2.2 should be installed as package, no need to add to path manually
 
 try:
     import wan
-    from wan.models.video_generation import VideoGeneration
-    from wan.utils.video import save_video_frames
-    WanVideo = VideoGeneration
+    # Import the actual modules from WAN 2.2
+    from wan.text2video import Text2Video
+    from wan.image2video import Image2Video
+    from wan.textimage2video import TextImage2Video
+    WanVideo = None  # Will be set based on model type
 except ImportError as e:
     logging.warning(f"Could not import WAN modules: {e}")
+    Text2Video = None
+    Image2Video = None
+    TextImage2Video = None
     WanVideo = None
 
 logging.basicConfig(level=logging.INFO)
@@ -74,10 +78,25 @@ class VideoGenerator:
     def load_model(self):
         """Load WAN model"""
         try:
-            if WanVideo is None:
+            # Select appropriate WAN class based on model type
+            if Text2Video is None and Image2Video is None and TextImage2Video is None:
                 raise ImportError("WAN2 modules not available")
             
             logger.info(f"Loading WAN {self.model_type} model from {self.model_path}")
+            
+            # Determine which WAN class to use based on model type
+            if self.model_type in ["TI2V-5B"]:  # Supports both T2V and I2V
+                WanClass = TextImage2Video if TextImage2Video else Text2Video
+            elif self.model_type in ["T2V-A14B"]:  # Text-to-Video only
+                WanClass = Text2Video
+            elif self.model_type in ["I2V-A14B", "I2V-14B-720P", "I2V-14B-480P", "VACE-1.3B"]:  # Image-to-Video only
+                WanClass = Image2Video
+            else:
+                # Default to TextImage2Video for unknown models
+                WanClass = TextImage2Video if TextImage2Video else Text2Video
+            
+            if WanClass is None:
+                raise ImportError(f"No suitable WAN class found for model type: {self.model_type}")
             
             # Configure model parameters based on type
             if self.model_type in ["TI2V-5B"]:
@@ -110,7 +129,7 @@ class VideoGenerator:
                     "convert_model_dtype": True,
                 }
             
-            self.model = WanVideo(**config)
+            self.model = WanClass(**config)
             logger.info("Model loaded successfully")
             
             # Load LoRAs if provided
@@ -178,9 +197,11 @@ class VideoGenerator:
         if isinstance(image_data, str):
             # Base64 encoded image
             image_bytes = base64.b64decode(image_data)
-            image = Image.open(tempfile.BytesIO(image_bytes))
+            import io
+            image = Image.open(io.BytesIO(image_bytes))
         elif isinstance(image_data, bytes):
-            image = Image.open(tempfile.BytesIO(image_data))
+            import io
+            image = Image.open(io.BytesIO(image_data))
         elif isinstance(image_data, Image.Image):
             image = image_data
         else:
@@ -240,27 +261,27 @@ class VideoGenerator:
                 logger.info(f"Generating I2V with {self.model_type}: {width}x{height}, {duration_seconds}s ({num_frames} frames), {fps} FPS")
                 
                 video_frames = self.model.generate(
-                    prompt=prompt,
-                    image=processed_image,
-                    negative_prompt=negative_prompt,
-                    width=width,
-                    height=height,
-                    num_frames=num_frames,
-                    guidance_scale=guidance_scale,
-                    num_inference_steps=num_inference_steps
+                    input_prompt=prompt,
+                    img=processed_image,
+                    max_area=width*height,
+                    frame_num=num_frames,
+                    guide_scale=guidance_scale,
+                    sampling_steps=num_inference_steps,
+                    n_prompt=negative_prompt,
+                    seed=seed if seed is not None else None
                 )
             elif image is None and self.model_type in t2v_models:
                 # Text-to-video generation
                 logger.info(f"Generating T2V with {self.model_type}: {width}x{height}, {duration_seconds}s ({num_frames} frames), {fps} FPS")
                 
                 video_frames = self.model.generate(
-                    prompt=prompt,
-                    negative_prompt=negative_prompt,
-                    width=width,
-                    height=height,
-                    num_frames=num_frames,
-                    guidance_scale=guidance_scale,
-                    num_inference_steps=num_inference_steps
+                    input_prompt=prompt,
+                    size=(width, height),
+                    frame_num=num_frames,
+                    guide_scale=guidance_scale,
+                    sampling_steps=num_inference_steps,
+                    n_prompt=negative_prompt,
+                    seed=seed if seed is not None else None
                 )
             else:
                 # Model doesn't support this mode
@@ -286,15 +307,23 @@ class VideoGenerator:
             if torch.is_tensor(frames):
                 frames = frames.cpu().numpy()
             
-            # Ensure frames are in correct format (H, W, C) and uint8
-            if frames.ndim == 4:  # (T, H, W, C)
-                frames = frames.transpose(0, 1, 2, 3)
+            # WAN returns frames in (C, N, H, W) format, convert to (N, H, W, C)
+            if frames.ndim == 4:
+                if frames.shape[0] in [1, 3]:  # (C, N, H, W) format
+                    frames = frames.transpose(1, 2, 3, 0)  # (N, H, W, C)
+                # else assume already in (N, H, W, C) format
             
-            if frames.dtype != np.uint8:
-                frames = (frames * 255).astype(np.uint8)
+            # Normalize to [0, 1] if needed, then convert to uint8
+            if frames.dtype == np.float32 or frames.dtype == np.float64:
+                if frames.max() <= 1.0:
+                    frames = (frames * 255).astype(np.uint8)
+                else:
+                    frames = frames.astype(np.uint8)
+            elif frames.dtype != np.uint8:
+                frames = frames.astype(np.uint8)
             
             # Get video dimensions
-            height, width = frames.shape[1:3]
+            num_frames, height, width = frames.shape[:3]
             
             # Setup video writer
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -421,7 +450,8 @@ class MockVideoGenerator:
 
 def create_generator(model_path, model_type="TI2V-5B", device="cuda", use_mock=False, lora_paths=None):
     """Factory function to create video generator"""
-    if use_mock or WanVideo is None:
+    wan_available = Text2Video is not None or Image2Video is not None or TextImage2Video is not None
+    if use_mock or not wan_available:
         return MockVideoGenerator(model_path, model_type, device)
     else:
         return VideoGenerator(model_path, model_type, device, lora_paths)

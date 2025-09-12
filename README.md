@@ -119,7 +119,7 @@ Configure your serverless endpoint with these environment variables:
 | Variable | Type | Default | Description | Example |
 |----------|------|---------|-------------|---------|
 | **Model Configuration** | | | | |
-| `WAN_MODEL_TYPE` | select | `I2V-14B-720P` | Choose WAN model variant | `VACE-1.3B`, `I2V-14B-720P`, `TI2V-5B` |
+| `WAN_MODEL_TYPE` | select | `TI2V-5B` | Choose WAN model variant | `VACE-1.3B`, `I2V-14B-720P`, `TI2V-5B` |
 | `USE_MOCK_GENERATOR` | boolean | `false` | Use mock generator for testing | `true` for testing, `false` for production |
 | **LoRA Configuration** | | | | |
 | `LORA_URL_1` | string | - | First LoRA download URL | CivitAI model URL |

@@ -25,7 +25,7 @@
       {
         "name": "🎯 Production RTX 4090 (24GB) - Recommended",
         "defaults": {
-          "WAN_MODEL_TYPE": "I2V-14B-720P",
+          "WAN_MODEL_TYPE": "TI2V-5B",
           "USE_MOCK_GENERATOR": "false"
         }
       },
@@ -66,7 +66,7 @@
           "type": "select",
           "description": "Choose WAN model variant based on your GPU VRAM",
           "options": ["VACE-1.3B", "I2V-14B-480P", "I2V-14B-720P", "TI2V-5B", "T2V-A14B", "I2V-A14B"],
-          "default": "I2V-14B-720P"
+          "default": "TI2V-5B"
         }
       },
       {
