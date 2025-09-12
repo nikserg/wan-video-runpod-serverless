@@ -2,9 +2,9 @@ import runpod
 import base64
 import logging
 import os
-import tempfile
 from model_downloader import ModelDownloader
 from video_generator import create_generator
+from check_cuda import is_cuda_available
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -12,6 +12,11 @@ logger = logging.getLogger(__name__)
 # Global variables for model
 generator = None
 model_info = None
+
+if not is_cuda_available():
+    logger.error("CUDA is not available.")
+    exit(1)
+
 
 def initialize_models():
     """Initialize WAN 2.2 models and LoRAs on container startup"""

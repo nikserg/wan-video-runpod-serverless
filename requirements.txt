@@ -4,3 +4,4 @@ requests
 pillow
 huggingface_hub>=0.24.0
 hf_transfer
+decord
