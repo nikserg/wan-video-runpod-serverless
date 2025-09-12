@@ -14,13 +14,13 @@ RUN mkdir -p /workspace
 # --- Install PyTorch 2.7 (CUDA 12.8) and torchvision ---
 RUN python3.10 -m pip install --upgrade pip && \
     pip install \
-      torch==2.7.0+cu128 \
-      torchvision==0.22.0+cu128 \
+      torch==2.8.0+cu128 \
+      torchvision==0.23.0+cu128 \
       --index-url https://download.pytorch.org/whl/cu128
 
 # --- Install FlashAttention from prebuilt wheel (compatible with torch 2.7) ---
 RUN python3.10 -m pip install \
-    https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.7cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
+    https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.8cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
 
 # Copy and install Python dependencies (excluding flash_attn to avoid rebuild)
 COPY requirements.txt /tmp/requirements.txt
