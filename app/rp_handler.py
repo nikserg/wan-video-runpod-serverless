@@ -44,7 +44,17 @@ def initialize_models():
         
     except Exception as e:
         logger.error(f"Failed to initialize models: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
+        
+        # Check if it's a memory error
+        if "memory" in str(e).lower() or "out of memory" in str(e).lower():
+            logger.warning("💡 Memory error detected. Consider:")
+            logger.warning("   - Using VACE-1.3B model (WAN_MODEL_TYPE=VACE-1.3B)")
+            logger.warning("   - Reducing container memory usage")
+            logger.warning("   - Using mock generator for testing")
+        
         # Use mock generator as fallback
+        logger.info("🔄 Falling back to mock generator...")
         generator = create_generator("", "TI2V-5B", use_mock=True)
 
 def handler(job):

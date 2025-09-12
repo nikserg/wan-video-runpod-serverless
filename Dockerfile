@@ -25,18 +25,10 @@ RUN python3.10 -m pip install \
 COPY requirements.txt /tmp/requirements.txt
 RUN python3.10 -m pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
-# Clone and install Wan2.2
-RUN git clone https://github.com/Wan-Video/Wan2.2.git /app/Wan2.2 && \
-    cd /app/Wan2.2 && \
-    python3.10 -m pip install -e . && \
-    cd /app && \
-    rm -rf /app/Wan2.2/.git
 
 # Copy application files
-COPY rp_handler.py /app/rp_handler.py
-COPY model_downloader.py /app/model_downloader.py
-COPY video_generator.py /app/video_generator.py
-COPY check_cuda.py /app/check_cuda.py
+COPY ./app /app
+COPY ./wan /wan
 
 WORKDIR /app
 CMD ["python3.10", "-u", "/app/rp_handler.py"]

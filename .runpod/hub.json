@@ -97,6 +97,15 @@
         }
       },
       {
+        "key": "CIVITAI_API_KEY",
+        "input": {
+          "name": "CivitAI API Key",
+          "type": "string",
+          "description": "API key for authenticated CivitAI downloads (get from https://civitai.com/user/account)",
+          "default": ""
+        }
+      },
+      {
         "key": "USE_MOCK_GENERATOR",
         "input": {
           "name": "Use Mock Generator",

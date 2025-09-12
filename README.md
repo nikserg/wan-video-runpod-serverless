@@ -122,9 +122,10 @@ Configure your serverless endpoint with these environment variables:
 | `WAN_MODEL_TYPE` | select | `TI2V-5B` | Choose WAN model variant | `VACE-1.3B`, `I2V-14B-720P`, `TI2V-5B` |
 | `USE_MOCK_GENERATOR` | boolean | `false` | Use mock generator for testing | `true` for testing, `false` for production |
 | **LoRA Configuration** | | | | |
-| `LORA_URL_1` | string | - | First LoRA download URL | CivitAI model URL |
-| `LORA_URL_2` | string | - | Second LoRA download URL (optional) | CivitAI model URL |
+| `LORA_URL_1` | string | - | First LoRA download URL | `https://civitai.com/models/123?modelVersionId=456` |
+| `LORA_URL_2` | string | - | Second LoRA download URL (optional) | `https://civitai.com/api/download/models/456` |
 | `LORA_URL_3` | string | - | Third LoRA download URL (optional) | CivitAI model URL |
+| `CIVITAI_API_KEY` | string | - | **🔐 CivitAI API key for authenticated downloads** | Get from https://civitai.com/user/account |
 
 ### Model Type Options
 
@@ -315,43 +316,130 @@ docker run --rm -p 8000:8000 --gpus all \
 }
 ```
 
-## Troubleshooting
-
-### Common Issues
-
-**Model Download Fails**
-- Check internet connectivity and Hugging Face access
-- Ensure sufficient disk space (100GB+)
-- Try switching to `USE_MOCK_GENERATOR=true` for testing
-
-**Out of Memory Errors**  
-- Switch to smaller model (I2V-14B-480P or VACE-1.3B)
-- Reduce resolution preset (`720p` → `480p`)
-- Lower video duration and FPS
-- Enable mock generator for testing
-
-**Slow Generation**
-- Use VACE-1.3B for fastest results (~1 min)
-- Lower `num_inference_steps` to 30-40
-- Reduce resolution preset and duration
-- Consider using I2V-14B-480P instead of 720P
-
-**API Timeout Errors**
-- Increase timeout in your client code (5+ minutes for real models)
-- Use shorter video duration for testing
-- Check RunPod pod status and logs
-
-**Quality Issues**
-- Use higher `guidance_scale` (7-10)
-- Add detailed negative prompts
-- Try different resolution presets
-- Ensure prompt describes motion clearly
 
 ### Mock Generator Mode
 For testing without GPU requirements:
 ```bash
 docker run -e USE_MOCK_GENERATOR=true wan-video-serverless
 ```
+
+## Project Structure
+
+After cloning, the project is organized as follows:
+
+```
+wan-video-serverless/
+├── app/                    # Application code
+│   ├── rp_handler.py      # RunPod serverless handler
+│   ├── model_downloader.py # WAN 2.2 and LoRA downloader
+│   ├── video_generator.py  # WAN model wrapper
+│   └── check_cuda.py      # CUDA availability check
+├── wan/                   # WAN 2.2 repository (cloned)
+│   ├── wan/              # WAN modules
+│   │   ├── configs/      # Model configurations
+│   │   ├── text2video.py # WanT2V class
+│   │   ├── image2video.py# WanI2V class
+│   │   └── textimage2video.py # WanTI2V class
+│   └── ...
+├── .runpod/              # RunPod Hub configuration
+│   ├── hub.json          # Hub marketplace settings
+│   └── tests.json        # Test configurations
+├── Dockerfile            # Container build instructions
+├── requirements.txt      # Python dependencies
+└── README.md             # This file
+```
+
+## LoRA Downloads & Authentication
+
+### CivitAI API Key Setup
+
+Many LoRAs on CivitAI require authentication. To download them automatically:
+
+1. **Get your API key:**
+   - Visit https://civitai.com/user/account
+   - Create an API key
+   - Copy the key
+
+2. **Set the environment variable:**
+   ```bash
+   CIVITAI_API_KEY=your_api_key_here
+   ```
+
+3. **Or use RunPod Hub UI:**
+   - Enter the API key in the "CivitAI API Key" field when deploying
+
+### LoRA URL Formats
+
+✅ **Supported URL formats:**
+```bash
+# Model page with version ID (recommended)
+LORA_URL_1=https://civitai.com/models/1307155/model-name?modelVersionId=1475095
+
+# Direct API download URL
+LORA_URL_2=https://civitai.com/api/download/models/1475095
+```
+
+❌ **Unsupported formats:**
+```bash
+# Model page without version ID
+LORA_URL_1=https://civitai.com/models/1307155/model-name
+```
+
+### Manual LoRA Installation
+
+If automatic download fails, you can manually install LoRAs:
+
+1. Download the `.safetensors` file from CivitAI
+2. Place it in `/runpod-volume/loras/` directory
+3. The system will automatically detect and load it
+
+## Troubleshooting
+
+### LoRA Download Issues
+
+**Problem:** Getting HTML instead of LoRA file
+```
+❌ Downloaded HTML authentication page instead of LoRA file
+```
+
+**Solutions:**
+1. **Set API Key:** Export `CIVITAI_API_KEY=your_key`
+2. **Check URL format:** Use `?modelVersionId=123` parameter
+3. **Manual download:** Place `.safetensors` in `/runpod-volume/loras/`
+4. **Skip LoRA:** The system will continue without failed LoRAs
+
+**Problem:** WAN import errors
+```
+❌ Could not import WAN modules: cannot import name 'WanT2V'
+```
+
+**Solutions:**
+1. **Check project structure:** Ensure `/wan` directory exists
+2. **Rebuild container:** Force rebuild with `--no-cache`
+3. **Check logs:** Look for WAN 2.2 repository clone errors
+
+**Problem:** Configuration errors
+```
+❌ 'EasyDict' object has no attribute 'boundary'
+```
+
+**Solutions:**
+1. **Update dependencies:** Ensure `easydict` is installed
+2. **Check model type:** Verify `WAN_MODEL_TYPE` is supported
+3. **Use mock mode:** Set `USE_MOCK_GENERATOR=true` for testing
+
+### Performance Issues
+
+**Problem:** Out of memory errors
+- Try smaller model (VACE-1.3B)
+- Reduce resolution preset  
+- Decrease `duration_seconds`
+- Lower `num_inference_steps`
+
+**Problem:** Slow generation
+- Use appropriate model for your GPU
+- Enable `convert_model_dtype=True`
+- Set `t5_cpu=True` for TI2V-5B
 
 ## FAQ
 
@@ -364,7 +452,7 @@ A: I2V-14B-720P for RTX 4090, or I2V-A14B for enterprise GPUs.
 A: 1-12 minutes depending on model and settings. See Performance table above.
 
 **Q: Can I use custom LoRAs?**  
-A: Yes, set LORA_URL_1, LORA_URL_2, LORA_URL_3 environment variables with CivitAI URLs.
+A: Yes! Set `LORA_URL_1`, `LORA_URL_2`, `LORA_URL_3` with CivitAI URLs. For authenticated downloads, also set `CIVITAI_API_KEY`. See LoRA Downloads section for details.
 
 **Q: What's the maximum video length?**  
 A: Technically unlimited, but longer videos require more VRAM and time. Recommended: 1-10 seconds.
