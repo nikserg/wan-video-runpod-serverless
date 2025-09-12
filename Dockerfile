@@ -13,7 +13,10 @@ RUN mkdir -p /workspace
 
 # --- Install PyTorch 2.7 (CUDA 12.8) and torchvision ---
 RUN python3.10 -m pip install --upgrade pip && \
-    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+    pip install \
+      torch==2.7.0+cu128 \
+      torchvision==0.22.0+cu128 \
+      --index-url https://download.pytorch.org/whl/cu128
 
 # --- Install FlashAttention from prebuilt wheel (compatible with torch 2.7) ---
 RUN python3.10 -m pip install \
@@ -28,10 +31,14 @@ RUN git clone https://github.com/Wan-Video/Wan2.2.git /workspace/Wan2.2 && \
     python3.10 -m pip install -e /workspace/Wan2.2 && \
     rm -rf /workspace/Wan2.2/.git
 
+# Show all packages installed
+RUN python3.10 -m pip list
+
 # Copy application files
 COPY rp_handler.py /rp_handler.py
 COPY model_downloader.py /model_downloader.py
 COPY video_generator.py /video_generator.py
+COPY check_cuda.py /check_cuda.py
 
 WORKDIR /workspace/Wan2.2
 CMD ["python3.10", "-u", "/rp_handler.py"]
