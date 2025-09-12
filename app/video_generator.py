@@ -93,6 +93,27 @@ def log_model_device_location(model, model_name="Model"):
     except Exception as e:
         logger.error(f"Failed to log model device location: {e}")
 
+def ensure_config_completeness(config, model_type="unknown"):
+    """Ensure config has all required attributes for WAN models"""
+    required_attrs = {
+        't5_checkpoint': 'models_t5_umt5-xxl-enc-bf16.pth',
+        't5_tokenizer': 'google/umt5-xxl',
+        'vae_checkpoint': 'Wan2.2_VAE.pth',
+        'boundary': 0.85,
+        'sample_shift': 5.0,
+    }
+    
+    added_attrs = []
+    for attr, default_value in required_attrs.items():
+        if not hasattr(config, attr):
+            setattr(config, attr, default_value)
+            added_attrs.append(attr)
+    
+    if added_attrs:
+        logger.info(f"🔧 Added missing config attributes for {model_type}: {', '.join(added_attrs)}")
+    
+    return config
+
 def force_model_to_gpu(model, target_device='cuda:0'):
     """Forcefully move all model components to GPU"""
     try:
@@ -235,9 +256,8 @@ class VideoGenerator:
                 try:
                     from wan.configs.wan_ti2v_5B import ti2v_5B
                     config = ti2v_5B
-                    # Add any missing parameters that might be needed
-                    if not hasattr(config, 'boundary'):
-                        config.boundary = 0.85  # Default boundary for TI2V
+                    # Ensure config has all required attributes
+                    config = ensure_config_completeness(config, "TI2V-5B")
                 except ImportError:
                     # Fallback: create config manually
                     from easydict import EasyDict
@@ -245,9 +265,6 @@ class VideoGenerator:
                     config = EasyDict()
                     config.update(wan_shared_cfg)
                     # Add TI2V-5B specific parameters
-                    config.t5_checkpoint = 'models_t5_umt5-xxl-enc-bf16.pth'
-                    config.t5_tokenizer = 'google/umt5-xxl'
-                    config.vae_checkpoint = 'Wan2.2_VAE.pth'
                     config.vae_stride = (4, 16, 16)
                     config.patch_size = (1, 2, 2)
                     config.dim = 3072
@@ -264,7 +281,8 @@ class VideoGenerator:
                     config.sample_steps = 50
                     config.sample_guide_scale = 5.0
                     config.frame_num = 121
-                    config.boundary = 0.85  # Default boundary for TI2V
+                    # Ensure all required attributes are present
+                    config = ensure_config_completeness(config, "TI2V-5B fallback")
                 model_kwargs = {
                     "config": config,
                     "checkpoint_dir": self.model_path,
@@ -287,9 +305,8 @@ class VideoGenerator:
                 from wan.configs.shared_config import wan_shared_cfg
                 config = EasyDict()
                 config.update(wan_shared_cfg)
-                # Add required parameters for WAN 2.1 models
-                config.boundary = 0.85  # Default boundary
-                config.sample_shift = 5.0
+                # Ensure all required attributes are present
+                config = ensure_config_completeness(config, "I2V-14B")
                 model_kwargs = {
                     "config": config,
                     "checkpoint_dir": self.model_path,
@@ -305,12 +322,11 @@ class VideoGenerator:
                 config = EasyDict()
                 config.update(wan_shared_cfg)
                 config.frame_num = 61  # Shorter videos for efficiency
-                # Add required parameters for VACE model
+                # Add VACE-specific optimizations
                 config.boundary = 0.80  # Lower boundary for efficient model
                 config.sample_shift = 3.0
-                # VACE model specific config - ensure T5 checkpoint is available
-                config.t5_checkpoint = 'models_t5_umt5-xxl-enc-bf16.pth'
-                config.t5_tokenizer = 'google/umt5-xxl'
+                # Ensure all required attributes are present
+                config = ensure_config_completeness(config, "VACE-1.3B")
                 
                 # Check available memory and optimize VACE configuration
                 ram_info = psutil.virtual_memory()
@@ -352,23 +368,24 @@ class VideoGenerator:
                 config = EasyDict()
                 config.update(wan_shared_cfg)
                 logger.warning(f"Using default config for unknown model type: {self.model_type}")
-                # Add default required parameters
-                config.boundary = 0.85
-                config.sample_shift = 5.0
+                # Ensure all required attributes are present
+                config = ensure_config_completeness(config, f"Default-{self.model_type}")
                 
                 # Add specific configs for A14B models if matched
                 if self.model_type == "T2V-A14B":
                     try:
                         from wan.configs.wan_t2v_A14B import t2v_A14B
                         config = t2v_A14B
+                        config = ensure_config_completeness(config, "T2V-A14B")
                     except ImportError:
-                        pass  # Use shared config
+                        pass  # Use shared config with completeness check already applied
                 elif self.model_type == "I2V-A14B":
                     try:
                         from wan.configs.wan_i2v_A14B import i2v_A14B
                         config = i2v_A14B
+                        config = ensure_config_completeness(config, "I2V-A14B")
                     except ImportError:
-                        pass  # Use shared config
+                        pass  # Use shared config with completeness check already applied
                 model_kwargs = {
                     "config": config,
                     "checkpoint_dir": self.model_path,
