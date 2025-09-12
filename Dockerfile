@@ -28,7 +28,6 @@ RUN python3.10 -m pip install -r /tmp/requirements.txt && rm /tmp/requirements.t
 
 # Clone and install Wan2.2
 RUN git clone https://github.com/Wan-Video/Wan2.2.git /workspace/Wan2.2 && \
-    python3.10 -m pip install -e /workspace/Wan2.2 && \
     rm -rf /workspace/Wan2.2/.git
 
 # Show all packages installed

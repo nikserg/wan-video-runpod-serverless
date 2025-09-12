@@ -4,4 +4,37 @@ requests
 pillow
 huggingface_hub>=0.24.0
 hf_transfer
+# wan requirements
+torchaudio
+opencv-python>=4.9.0.80
+diffusers>=0.31.0
+transformers>=4.49.0,<=4.51.3
+tokenizers>=0.20.3
+accelerate>=1.1.1
+tqdm
+imageio[ffmpeg]
+easydict
+ftfy
+dashscope
+imageio-ffmpeg
+numpy>=1.23.5,<2
+# wan s2v reqirements
+openai-whisper
+HyperPyYAML
+onnxruntime
+inflect
+wetext
+omegaconf
+conformer
+hydra-core
+lightning
+rich
+gdown
+matplotlib
+wget
+pyarrow
+pyworld
+librosa
 decord
+modelscope
+GitPython
