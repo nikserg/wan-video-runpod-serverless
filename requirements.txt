@@ -2,7 +2,7 @@
 runpod
 requests
 pillow
-huggingface_hub>=0.24.0
+huggingface_hub[cli]>=0.24.0
 hf_transfer
 # wan requirements
 torchaudio

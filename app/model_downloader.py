@@ -1,8 +1,8 @@
 import os
 import logging
 import requests
+import subprocess
 from pathlib import Path
-from huggingface_hub import snapshot_download
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ class ModelDownloader:
         self.loras_dir.mkdir(parents=True, exist_ok=True)
     
     def download_wan_model(self, model_name="Wan-AI/Wan2.2-TI2V-5B", force_download=False):
-        """Download WAN 2.2 model from Hugging Face"""
+        """Download WAN model from Hugging Face using huggingface-cli"""
         model_path = self.models_dir / model_name.split("/")[-1]
         
         if model_path.exists() and not force_download:
@@ -24,12 +24,26 @@ class ModelDownloader:
         
         logger.info(f"Downloading WAN model: {model_name}")
         try:
-            snapshot_download(
-                repo_id=model_name,
-                local_dir=str(model_path)
-            )
+            # Use huggingface-cli download with --local-dir to properly handle sharded models
+            cmd = [
+                "huggingface-cli", "download", 
+                model_name, 
+                "--local-dir", str(model_path)
+            ]
+            
+            logger.info(f"Running command: {' '.join(cmd)}")
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            
+            if result.stdout:
+                logger.info(f"Download output: {result.stdout}")
+            
             logger.info(f"Successfully downloaded {model_name} to {model_path}")
             return str(model_path)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to download {model_name}: {e}")
+            if e.stderr:
+                logger.error(f"Error output: {e.stderr}")
+            raise
         except Exception as e:
             logger.error(f"Failed to download {model_name}: {e}")
             raise
