@@ -3,10 +3,11 @@ import base64
 import logging
 import os
 from model_downloader import ModelDownloader
-from video_generator import create_generator
+from cli_video_generator import create_cli_generator
 from check_cuda import is_cuda_available
 
 logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 # Global variables for model
@@ -31,13 +32,14 @@ def initialize_models():
         
         logger.info(f"Model setup complete: {model_info}")
         
-        # Initialize video generator
+        # Initialize CLI video generator
         use_mock = os.getenv("USE_MOCK_GENERATOR", "false").lower() == "true"
-        generator = create_generator(
+        wan_repo_path = os.getenv("WAN_REPO_PATH", "/wan")
+        generator = create_cli_generator(
             model_path=model_info["model_path"],
             model_type=model_info["model_type"],
             use_mock=use_mock,
-            lora_paths=model_info.get("lora_paths", [])
+            wan_repo_path=wan_repo_path
         )
         
         logger.info("Video generator initialized successfully")
@@ -53,9 +55,10 @@ def initialize_models():
             logger.warning("   - Reducing container memory usage")
             logger.warning("   - Using mock generator for testing")
         
-        # Use mock generator as fallback
-        logger.info("🔄 Falling back to mock generator...")
-        generator = create_generator("", "TI2V-5B", use_mock=True)
+        # Use mock CLI generator as fallback
+        logger.info("🔄 Falling back to mock CLI generator...")
+        wan_repo_path = os.getenv("WAN_REPO_PATH", "/wan")
+        generator = create_cli_generator("", "I2V-14B-480P", use_mock=True, wan_repo_path=wan_repo_path)
 
 def handler(job):
     """RunPod serverless handler for WAN 2.2 video generation"""
