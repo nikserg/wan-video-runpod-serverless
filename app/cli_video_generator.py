@@ -32,14 +32,14 @@ class CLIVideoGenerator:
     def get_task_from_model_type(self, model_type):
         """Map model type to CLI task parameter"""
         task_mapping = {
-            "I2V-14B-480P": "i2v-14B",
-            "I2V-14B-720P": "i2v-14B",
+            "I2V-14B-480P": "i2v-A14B",
+            "I2V-14B-720P": "i2v-A14B",
             "TI2V-5B": "ti2v-5B",
             "T2V-A14B": "t2v-A14B",
             "I2V-A14B": "i2v-A14B",
-            "VACE-1.3B": "vace-1.3B"
+            "VACE-1.3B": "ti2v-5B"  # VACE might use ti2v-5B task
         }
-        return task_mapping.get(model_type, "i2v-14B")
+        return task_mapping.get(model_type, "i2v-A14B")
 
     def get_optimal_size_for_model(self, model_type, width=None, height=None):
         """Get optimal size for specific model"""
