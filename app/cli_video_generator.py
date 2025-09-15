@@ -32,14 +32,14 @@ class CLIVideoGenerator:
     def get_task_from_model_type(self, model_type):
         """Map model type to CLI task parameter"""
         task_mapping = {
-            "I2V-14B-480P": "i2v-A14B",
-            "I2V-14B-720P": "i2v-A14B",
+            "I2V-14B-480P": "i2v-14B",
+            "I2V-14B-720P": "i2v-14B",
             "TI2V-5B": "ti2v-5B",
             "T2V-A14B": "t2v-A14B",
             "I2V-A14B": "i2v-A14B",
-            "VACE-1.3B": "ti2v-5B"  # VACE might use ti2v-5B task
+            "VACE-1.3B": "ti2v-5B"
         }
-        return task_mapping.get(model_type, "i2v-A14B")
+        return task_mapping.get(model_type, "i2v-14B")
 
     def get_optimal_size_for_model(self, model_type, width=None, height=None):
         """Get optimal size for specific model"""
@@ -118,14 +118,13 @@ class CLIVideoGenerator:
             cmd = ["python", str(self.wan_repo_path / "generate.py")]
             multi_gpu_args = []
 
-        # Core arguments
+        # Core arguments - simplified to match official example
         args = [
             "--task", task,
             "--size", size,
             "--ckpt_dir", str(self.model_path),
             "--image", image_path,
-            "--prompt", prompt,
-            "--output_dir", str(output_dir)
+            "--prompt", prompt
         ]
 
         # Optional arguments
@@ -191,24 +190,40 @@ class CLIVideoGenerator:
             logger.error(f"❌ Unexpected error during generation: {e}")
             raise
 
-    def find_output_video(self, output_dir):
-        """Find the generated video file in output directory"""
-        video_extensions = ['.mp4', '.avi', '.mov', '.mkv']
+    def find_output_video(self, task, size, prompt, before_time):
+        """Find the generated video file using WAN's naming convention"""
+        # WAN saves in the working directory (wan repo path) with this pattern:
+        # {task}_{size}_{ulysses_size}_{formatted_prompt}_{timestamp}.mp4
 
-        for ext in video_extensions:
-            video_files = list(output_dir.glob(f"*{ext}"))
-            if video_files:
-                return video_files[0]  # Return first video found
+        search_dir = self.wan_repo_path
+        video_files = list(search_dir.glob("*.mp4"))
 
-        # Also check subdirectories
-        for subdir in output_dir.iterdir():
-            if subdir.is_dir():
-                for ext in video_extensions:
-                    video_files = list(subdir.glob(f"*{ext}"))
-                    if video_files:
-                        return video_files[0]
+        if not video_files:
+            return None
 
-        return None
+        # Filter for videos created after our generation started
+        recent_videos = []
+        for video_file in video_files:
+            file_mtime = video_file.stat().st_mtime
+            if file_mtime > before_time:
+                recent_videos.append(video_file)
+
+        if not recent_videos:
+            # Fallback: return most recent video file
+            return max(video_files, key=lambda p: p.stat().st_mtime) if video_files else None
+
+        # Look for video that matches our task and size pattern
+        formatted_prompt = prompt.replace(" ", "_").replace("/", "_")[:50]
+        size_formatted = size.replace("*", "x")
+
+        for video_file in recent_videos:
+            filename = video_file.name
+            # Check if filename starts with expected pattern
+            if filename.startswith(f"{task}_{size}") or filename.startswith(f"{task}_{size_formatted}"):
+                return video_file
+
+        # Return most recent video if no pattern match
+        return max(recent_videos, key=lambda p: p.stat().st_mtime)
 
     def video_to_base64(self, video_path):
         """Convert video file to base64 string"""
@@ -280,8 +295,11 @@ class CLIVideoGenerator:
             # Save input image to temporary file
             temp_image_path = self.save_image_to_temp(image)
 
-            # Build generation command
-            cmd, output_dir = self.build_generation_command(
+            # Record time before generation for output detection
+            before_time = time.time()
+
+            # Build generation command (no output_dir needed)
+            cmd, _ = self.build_generation_command(
                 task=task,
                 size=size,
                 image_path=temp_image_path,
@@ -294,12 +312,12 @@ class CLIVideoGenerator:
             )
 
             # Run generation
-            self.run_generation(cmd, output_dir)
+            self.run_generation(cmd, None)
 
-            # Find output video
-            video_path = self.find_output_video(output_dir)
+            # Find output video using WAN's naming convention
+            video_path = self.find_output_video(task, size, prompt, before_time)
             if not video_path:
-                raise RuntimeError(f"No video file found in output directory: {output_dir}")
+                raise RuntimeError(f"No video file found in WAN repo directory: {self.wan_repo_path}")
 
             logger.info(f"Found generated video: {video_path}")
 
