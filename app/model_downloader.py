@@ -26,7 +26,7 @@ class ModelDownloader:
         try:
             # Use huggingface-cli download with --local-dir to properly handle sharded models
             cmd = [
-                "huggingface-cli", "download", 
+                "hf", "download",
                 model_name, 
                 "--local-dir", str(model_path)
             ]
@@ -204,11 +204,9 @@ class ModelDownloader:
         elif model_type == "I2V-A14B":
             model_name = "Wan-AI/Wan2.2-I2V-A14B"
         elif model_type == "I2V-14B-720P":
-            model_name = "Wan-AI/Wan2.1-I2V-14B-720P"
+            model_name = "Wan-AI/Wan2.2-I2V-14B-720P"
         elif model_type == "I2V-14B-480P":
-            model_name = "Wan-AI/Wan2.1-I2V-14B-480P"
-        elif model_type == "VACE-1.3B":
-            model_name = "Wan-AI/Wan2.1-VACE-1.3B"
+            model_name = "Wan-AI/Wan2.2-I2V-14B-480P"
         else:
             logger.warning(f"Unknown model type: {model_type}, defaulting to TI2V-5B")
             model_name = "Wan-AI/Wan2.2-TI2V-5B"
