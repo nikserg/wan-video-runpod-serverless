@@ -204,9 +204,9 @@ class ModelDownloader:
         elif model_type == "I2V-A14B":
             model_name = "Wan-AI/Wan2.2-I2V-A14B"
         elif model_type == "I2V-14B-720P":
-            model_name = "Wan-AI/Wan2.2-I2V-14B-720P"
+            model_name = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
         elif model_type == "I2V-14B-480P":
-            model_name = "Wan-AI/Wan2.2-I2V-14B-480P"
+            model_name = "Wan-AI/Wan2.2-I2V-A14B-Diffusers"
         else:
             logger.warning(f"Unknown model type: {model_type}, defaulting to TI2V-5B")
             model_name = "Wan-AI/Wan2.2-TI2V-5B"
