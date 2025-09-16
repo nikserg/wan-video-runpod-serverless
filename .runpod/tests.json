@@ -4,7 +4,8 @@
       "name": "text_to_video_720p_test",
       "input": {
         "prompt": "A beautiful sunset over the ocean with waves gently crashing on the beach",
-        "resolution_preset": "720p",
+        "width": 1280,
+        "height": 720,
         "duration_seconds": 3.0,
         "fps": 24
       },
