@@ -179,7 +179,7 @@ class ModelDownloader:
                 try:
                     filename = f"lora_{i+1}.safetensors"
                     lora_path = self.download_civitai_lora(url, filename)
-                    if lora_path:  # Only add if download was successful
+                    if lora_path:  # Only  add if download was successful
                         lora_paths.append(lora_path)
                         logger.info(f"✅ LoRA {i+1} downloaded successfully")
                     else:
