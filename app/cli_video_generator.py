@@ -42,14 +42,16 @@ class CLIVideoGenerator:
         return task_mapping.get(model_type, "i2v-A14B")
 
     def get_size_from_preset(self, resolution_preset):
-        """Convert resolution preset to size string"""
+        """Convert resolution preset to size string - using WAN CLI supported sizes only"""
+        # WAN CLI supported sizes: '720*1280', '1280*720', '480*832', '832*480',
+        # '704*1280', '1280*704', '1024*704', '704*1024'
         preset_mapping = {
-            "480p": "854*480",
+            "480p": "832*480",
             "720p": "1280*720",
             "720p_vertical": "720*1280",
-            "480p_vertical": "480*854",
-            "square": "1024*1024",
-            "square_small": "512*512"
+            "480p_vertical": "480*832",
+            "square": "1024*704",  # Closest to square from supported sizes
+            "square_small": "704*1024"  # Alternative square-ish ratio
         }
         return preset_mapping.get(resolution_preset)
 
@@ -63,7 +65,7 @@ class CLIVideoGenerator:
 
         # Then check model-specific defaults
         if model_type == "I2V-14B-480P":
-            return "854*480"  # Fixed: was incorrectly 832*480
+            return "832*480"  # Using WAN CLI supported size
         elif model_type == "I2V-14B-720P":
             return "1280*720"
         elif model_type == "VACE-1.3B":
