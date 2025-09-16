@@ -1,6 +1,6 @@
 [![Runpod](https://api.runpod.io/badge/nikserg/wan-video-runpod-serverless)](https://console.runpod.io/hub/nikserg/wan-video-runpod-serverless)
 
-# WAN 2.2 Video Generation Serverless
+# WAN 2.2 Video  Generation Serverless
 
 RunPod serverless endpoint for WAN 2.2 video generation supporting both text-to-video (T2V) and image-to-video (I2V) generation with configurable duration and FPS.
 
