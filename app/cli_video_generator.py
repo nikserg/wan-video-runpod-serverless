@@ -92,26 +92,29 @@ class CLIVideoGenerator:
                                use_multi_gpu=True):
         """Build the CLI command for video generation"""
 
-        # Determine output path
+        # Determine output file path using WAN's naming convention
         timestamp = int(time.time())
-        output_dir = self.temp_dir / f"output_{timestamp}"
-        output_dir.mkdir(exist_ok=True)
-
+        formatted_prompt = prompt.replace(" ", "_").replace("/", "_")[:50]
         gpu_count = self.check_gpu_count() if use_multi_gpu else 1
+        ulysses_size = min(gpu_count, 8) if use_multi_gpu and gpu_count > 1 else 1
+
+        # Create save file path in temp directory for better control
+        save_filename = f"{task}_{size}_{ulysses_size}_{formatted_prompt}_{timestamp}.mp4"
+        save_file_path = self.temp_dir / save_filename
 
         # Base command
         if gpu_count > 1 and use_multi_gpu:
             # Multi-GPU with torchrun
             cmd = [
                 "torchrun",
-                f"--nproc_per_node={min(gpu_count, 8)}",  # Limit to 8 GPUs max
+                f"--nproc_per_node={ulysses_size}",  # Limit to 8 GPUs max
                 str(self.wan_repo_path / "generate.py")
             ]
             # Add FSDP flags for multi-GPU
             multi_gpu_args = [
                 "--dit_fsdp",
                 "--t5_fsdp",
-                f"--ulysses_size={min(gpu_count, 8)}"
+                f"--ulysses_size={ulysses_size}"
             ]
         else:
             # Single GPU
@@ -124,7 +127,10 @@ class CLIVideoGenerator:
             "--size", size,
             "--ckpt_dir", str(self.model_path),
             "--image", image_path,
-            "--prompt", prompt
+            "--prompt", prompt,
+            "--save_file", str(save_file_path),
+            "--offload_model", "True",
+            "--convert_model_dtype"
         ]
 
         # Optional arguments
@@ -144,19 +150,22 @@ class CLIVideoGenerator:
         full_cmd = cmd + args + multi_gpu_args
 
         logger.info(f"Generation command: {' '.join(full_cmd)}")
-        return full_cmd, output_dir
+        logger.info(f"Output will be saved to: {save_file_path}")
+        return full_cmd, save_file_path
 
-    def run_generation(self, cmd, output_dir, timeout=600):
+    def run_generation(self, cmd, save_file_path, timeout=600):
         """Run the generation command with proper error handling"""
         try:
             logger.info("Starting video generation...")
 
-            # Set environment variables for GPU optimization
+            # Set environment variables for GPU optimization and debugging
             env = os.environ.copy()
             env.update({
                 'CUDA_VISIBLE_DEVICES': '0' if self.check_gpu_count() == 1 else ','.join(map(str, range(self.check_gpu_count()))),
                 'PYTORCH_CUDA_ALLOC_CONF': 'expandable_segments:True',
-                'TOKENIZERS_PARALLELISM': 'false'  # Avoid tokenizer warnings
+                'TOKENIZERS_PARALLELISM': 'false',  # Avoid tokenizer warnings
+                'CUDA_LAUNCH_BLOCKING': '1',  # Synchronous CUDA for better error reporting
+                'TORCH_USE_CUDA_DSA': '1'  # Enable device-side assertions for debugging
             })
 
             # Change to WAN repository directory
@@ -270,7 +279,7 @@ class CLIVideoGenerator:
         """Generate video using WAN CLI interface"""
 
         temp_image_path = None
-        output_dir = None
+        save_file_path = None
 
         try:
             # Validate inputs
@@ -298,8 +307,8 @@ class CLIVideoGenerator:
             # Record time before generation for output detection
             before_time = time.time()
 
-            # Build generation command (no output_dir needed)
-            cmd, _ = self.build_generation_command(
+            # Build generation command with save_file path
+            cmd, save_file_path_result = self.build_generation_command(
                 task=task,
                 size=size,
                 image_path=temp_image_path,
@@ -311,15 +320,18 @@ class CLIVideoGenerator:
                 use_multi_gpu=use_multi_gpu
             )
 
+            # Store the save file path for cleanup
+            save_file_path = save_file_path_result
+
             # Run generation
-            self.run_generation(cmd, None)
+            self.run_generation(cmd, save_file_path)
 
-            # Find output video using WAN's naming convention
-            video_path = self.find_output_video(task, size, prompt, before_time)
-            if not video_path:
-                raise RuntimeError(f"No video file found in WAN repo directory: {self.wan_repo_path}")
+            # Check if the specified output file was created
+            if not save_file_path.exists():
+                raise RuntimeError(f"Video file not found at expected location: {save_file_path}")
 
-            logger.info(f"Found generated video: {video_path}")
+            logger.info(f"Generated video: {save_file_path}")
+            video_path = save_file_path
 
             # Convert to base64
             video_base64 = self.video_to_base64(video_path)
@@ -333,8 +345,8 @@ class CLIVideoGenerator:
             # Cleanup temporary files
             if temp_image_path:
                 self.cleanup_temp_files(temp_image_path)
-            if output_dir:
-                self.cleanup_temp_files(output_dir)
+            if save_file_path:
+                self.cleanup_temp_files(save_file_path)
 
 
 class MockCLIVideoGenerator:
