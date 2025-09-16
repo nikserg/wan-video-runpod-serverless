@@ -41,14 +41,33 @@ class CLIVideoGenerator:
         }
         return task_mapping.get(model_type, "i2v-A14B")
 
-    def get_optimal_size_for_model(self, model_type, width=None, height=None):
+    def get_size_from_preset(self, resolution_preset):
+        """Convert resolution preset to size string"""
+        preset_mapping = {
+            "480p": "854*480",
+            "720p": "1280*720",
+            "720p_vertical": "720*1280",
+            "480p_vertical": "480*854",
+            "square": "1024*1024",
+            "square_small": "512*512"
+        }
+        return preset_mapping.get(resolution_preset)
+
+    def get_optimal_size_for_model(self, model_type, width=None, height=None, resolution_preset=None):
         """Get optimal size for specific model"""
+        # First check if resolution preset is provided
+        if resolution_preset:
+            preset_size = self.get_size_from_preset(resolution_preset)
+            if preset_size:
+                return preset_size
+
+        # Then check model-specific defaults
         if model_type == "I2V-14B-480P":
-            return "832*480"
+            return "854*480"  # Fixed: was incorrectly 832*480
         elif model_type == "I2V-14B-720P":
             return "1280*720"
         elif model_type == "VACE-1.3B":
-            return "832*480"
+            return "832*480"  # VACE has its own optimal size
         else:
             # For other models, use provided dimensions or default
             if width and height:
@@ -153,7 +172,7 @@ class CLIVideoGenerator:
         logger.info(f"Output will be saved to: {save_file_path}")
         return full_cmd, save_file_path
 
-    def run_generation(self, cmd, save_file_path, timeout=600):
+    def run_generation(self, cmd, save_file_path, timeout=6000):
         """Run the generation command with proper error handling"""
         try:
             logger.info("Starting video generation...")
@@ -297,7 +316,7 @@ class CLIVideoGenerator:
 
             # Get task and size for model
             task = self.get_task_from_model_type(self.model_type)
-            size = self.get_optimal_size_for_model(self.model_type, width, height)
+            size = self.get_optimal_size_for_model(self.model_type, width, height, resolution_preset)
 
             logger.info(f"Using task: {task}, size: {size}")
 
